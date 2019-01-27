@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "alias": "ata-fetcher.cloud",
   "builds": [
     {
       "src": "api/**/*.ts",
