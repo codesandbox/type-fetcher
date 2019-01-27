@@ -92,7 +92,6 @@ module.exports = async (req: Request, res: Response) => {
 
       res.setHeader("Cache-Control", `max-age=31536000`);
       res.setHeader("Content-Type", `application/json`);
-      res.setHeader("Content-Encoding", `gzip`);
 
       res.end(
         JSON.stringify({
