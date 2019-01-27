@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/**/*.ts",
+      "use": "@now/node@canary"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/v1/typings/(.*)?\\.json",
+      "dest": "/api/v1/typings.ts?depQuery=$1"
+    }
+  ]
+}
