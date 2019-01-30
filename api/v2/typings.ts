@@ -88,29 +88,31 @@ module.exports = async (req: Request, res: Response) => {
 
       if (!Object.keys(files).some(p => /\.tsx?/.test(p))) {
         // Don't return any file if there is no typescript file for the dependency
-        return {
+        // TODO: optimize this to subdirectory level
+        res.end({
           status: "ok",
           files: {}
-        };
+        });
+      } else {
+        const filesWithNoPrefix = Object.keys(files).reduce(
+          (t, n) => ({
+            ...t,
+            [n.replace(dependencyPath, "")]: {
+              module: files[n]
+            }
+          }),
+          {}
+        );
+
+        res.setHeader("Access-Control-Allow-Origin", `*`);
+
+        res.end(
+          JSON.stringify({
+            status: "ok",
+            files: filesWithNoPrefix
+          })
+        );
       }
-      const filesWithNoPrefix = Object.keys(files).reduce(
-        (t, n) => ({
-          ...t,
-          [n.replace(dependencyPath, "")]: {
-            module: files[n]
-          }
-        }),
-        {}
-      );
-
-      res.setHeader("Access-Control-Allow-Origin", `*`);
-
-      res.end(
-        JSON.stringify({
-          status: "ok",
-          files: filesWithNoPrefix
-        })
-      );
     } finally {
       rimraf.sync(`/tmp/${dependencyLocation}`);
     }
