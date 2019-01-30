@@ -75,6 +75,9 @@ module.exports = async (req: Request, res: Response) => {
 
     const dependencyLocation = sum(`${dependency}@${version}`);
 
+    res.setHeader("Cache-Control", `max-age=31536000`);
+    res.setHeader("Content-Type", `application/json`);
+
     try {
       execSync(
         `cd /tmp && mkdir ${dependencyLocation} && cd ${dependencyLocation} && HOME=/tmp npm i ${dependency}@${version} --no-save`
@@ -100,8 +103,6 @@ module.exports = async (req: Request, res: Response) => {
         {}
       );
 
-      res.setHeader("Cache-Control", `max-age=31536000`);
-      res.setHeader("Content-Type", `application/json`);
       res.setHeader("Access-Control-Allow-Origin", `*`);
 
       res.end(
@@ -117,6 +118,7 @@ module.exports = async (req: Request, res: Response) => {
     res.status(422).end(
       JSON.stringify({
         status: "error",
+        files: {},
         error: e.message,
         stack: e.stack
       })
