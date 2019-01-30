@@ -85,7 +85,9 @@ module.exports = async (req: Request, res: Response) => {
       const filesWithNoPrefix = Object.keys(files).reduce(
         (t, n) => ({
           ...t,
-          [n.replace(dependencyPath, "")]: files[n]
+          [n.replace(dependencyPath, "")]: {
+            module: files[n]
+          }
         }),
         {}
       );
