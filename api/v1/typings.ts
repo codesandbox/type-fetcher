@@ -94,6 +94,7 @@ module.exports = async (req: Request, res: Response) => {
 
       res.setHeader("Cache-Control", `max-age=31536000`);
       res.setHeader("Content-Type", `application/json`);
+      res.setHeader("Access-Control-Allow-Origin", `*`);
 
       res.end(
         JSON.stringify({
