@@ -87,14 +87,7 @@ module.exports = async (req: Request, res: Response) => {
       const dependencyPath = `/tmp/${dependencyLocation}/node_modules`;
       const files = readDirectory(dependencyPath);
 
-      if (!Object.keys(files).some(p => /\.tsx?/.test(p))) {
-        // Don't return any file if there is no typescript file for the dependency
-        // TODO: optimize this to subdirectory level
-        res.end({
-          status: "ok",
-          files: {}
-        });
-      } else {
+      if (Object.keys(files).some(p => /\.tsx?/.test(p))) {
         const filesWithNoPrefix = Object.keys(files).reduce(
           (t, n) => ({
             ...t,
@@ -109,6 +102,15 @@ module.exports = async (req: Request, res: Response) => {
           JSON.stringify({
             status: "ok",
             files: filesWithNoPrefix
+          })
+        );
+      } else {
+        // Don't return any file if there is no typescript file for the dependency
+        // TODO: optimize this to subdirectory level
+        res.end(
+          JSON.stringify({
+            status: "ok",
+            files: {}
           })
         );
       }
