@@ -148,7 +148,8 @@ module.exports = async (req: Request, res: Response) => {
       rimraf.sync(`/tmp/${dependencyLocation}`);
     }
   } catch (e) {
-    res.status(422).end(
+    res.statusCode = 422;
+    res.end(
       JSON.stringify({
         status: "error",
         files: {},
