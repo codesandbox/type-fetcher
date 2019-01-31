@@ -66,9 +66,13 @@ function cleanFiles(files: { [path: string]: string }) {
   const paths = Object.keys(files);
   const validDependencies = paths.filter(checkedPath => {
     if (checkedPath.endsWith("/package.json")) {
-      const parsed = JSON.parse(files[checkedPath]);
-      if (parsed.typings) {
-        return true;
+      try {
+        const parsed = JSON.parse(files[checkedPath]);
+        if (parsed.typings) {
+          return true;
+        }
+      } catch (e) {
+        /* ignore */
       }
 
       return paths.some(
