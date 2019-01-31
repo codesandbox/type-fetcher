@@ -35,7 +35,7 @@ function isFileValid(path: string) {
   return false;
 }
 
-const BLACKLISTED_DIRECTORIES = ["src"];
+const BLACKLISTED_DIRECTORIES = ["src", "__tests__", "aws-sdk"];
 
 function readDirectory(location: string): { [path: string]: string } {
   const entries = fs.readdirSync(location);
@@ -92,7 +92,36 @@ function cleanFiles(files: { [path: string]: string }) {
   return newFiles;
 }
 
-module.exports = async (req: Request, res: Response) => {
+export function extractFiles(
+  dependency: string,
+  version: string,
+  dependencyLocation: string
+) {
+  execSync(
+    `cd /tmp && mkdir ${dependencyLocation} && cd ${dependencyLocation} && HOME=/tmp npm i --production ${dependency}@${version} --no-save`
+  ).toString();
+
+  const dependencyPath = `/tmp/${dependencyLocation}/node_modules`;
+
+  const files = cleanFiles(readDirectory(dependencyPath));
+
+  return files;
+}
+
+const MAX_RES_SIZE = 5.8 * 1024 * 1024;
+
+function dropFiles(files: { [path: string]: string }) {
+  let result: { [path: string]: string } = {};
+  let index = 0;
+  const paths = Object.keys(files);
+  while (JSON.stringify(result).length < MAX_RES_SIZE && index < paths.length) {
+    result[paths[index]] = files[paths[index]];
+  }
+
+  return { files: result, droppedFileCount: index + 1 };
+}
+
+export default async (req: Request, res: Response) => {
   try {
     const { query } = parse(req.url, true);
     let { depQuery } = query;
@@ -109,19 +138,15 @@ module.exports = async (req: Request, res: Response) => {
       depQuery
     );
 
-    const dependencyLocation = sum(`${dependency}@${version}`);
-
     res.setHeader("Cache-Control", `max-age=31536000`);
     res.setHeader("Content-Type", `application/json`);
     res.setHeader("Access-Control-Allow-Origin", `*`);
 
-    try {
-      execSync(
-        `cd /tmp && mkdir ${dependencyLocation} && cd ${dependencyLocation} && HOME=/tmp npm i ${dependency}@${version} --no-save`
-      ).toString();
+    const dependencyLocation = sum(`${dependency}@${version}`);
 
+    try {
       const dependencyPath = `/tmp/${dependencyLocation}/node_modules`;
-      const files = cleanFiles(readDirectory(dependencyPath));
+      let files = extractFiles(dependency, version, dependencyLocation);
 
       if (Object.keys(files).some(p => /\.tsx?/.test(p))) {
         const filesWithNoPrefix = Object.keys(files).reduce(
@@ -134,19 +159,31 @@ module.exports = async (req: Request, res: Response) => {
           {}
         );
 
-        console.log("file count");
-        console.log(Object.keys(files).length);
-        console.log("total length");
-        console.log(JSON.stringify(filesWithNoPrefix).length);
+        const resultSize = JSON.stringify({
+          status: "ok",
+          files: filesWithNoPrefix
+        }).length;
 
-        console.log(Object.keys(filesWithNoPrefix));
+        if (resultSize > MAX_RES_SIZE) {
+          const { files: cleanedFiles, droppedFileCount } = dropFiles(
+            filesWithNoPrefix
+          );
 
-        res.end(
-          JSON.stringify({
-            status: "ok",
-            files: filesWithNoPrefix
-          })
-        );
+          res.end(
+            JSON.stringify({
+              status: "ok",
+              files: cleanedFiles,
+              droppedFileCount
+            })
+          );
+        } else {
+          res.end(
+            JSON.stringify({
+              status: "ok",
+              files: filesWithNoPrefix
+            })
+          );
+        }
       } else {
         res.end(
           JSON.stringify({
