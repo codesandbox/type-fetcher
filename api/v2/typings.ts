@@ -35,6 +35,8 @@ function isFileValid(path: string) {
   return false;
 }
 
+const BLACKLISTED_DIRECTORIES = ["src"];
+
 function readDirectory(location: string): { [path: string]: string } {
   const entries = fs.readdirSync(location);
 
@@ -43,7 +45,7 @@ function readDirectory(location: string): { [path: string]: string } {
 
     const stat = fs.statSync(fullPath);
 
-    if (stat.isDirectory()) {
+    if (stat.isDirectory() && BLACKLISTED_DIRECTORIES.indexOf(entry) === -1) {
       return { ...result, ...readDirectory(fullPath) };
     }
 
