@@ -134,6 +134,13 @@ module.exports = async (req: Request, res: Response) => {
           {}
         );
 
+        console.log("file count");
+        console.log(Object.keys(files).length);
+        console.log("total length");
+        console.log(JSON.stringify(filesWithNoPrefix).length);
+
+        console.log(Object.keys(filesWithNoPrefix));
+
         res.end(
           JSON.stringify({
             status: "ok",
