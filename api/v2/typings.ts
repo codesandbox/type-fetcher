@@ -56,6 +56,36 @@ function readDirectory(location: string): { [path: string]: string } {
   }, {});
 }
 
+/**
+ * This function ensures that we only add package.json files that have typing files included
+ */
+function cleanFiles(files: { [path: string]: string }) {
+  const newFiles: { [path: string]: string } = {};
+  const paths = Object.keys(files);
+  const validDependencies = paths.filter(checkedPath => {
+    if (checkedPath.endsWith("/package.json")) {
+      const parsed = JSON.parse(files[checkedPath]);
+      if (parsed.typings) {
+        return true;
+      }
+
+      return paths.some(
+        p => p.startsWith(path.dirname(checkedPath)) && p.endsWith(".ts")
+      );
+    }
+
+    return false;
+  });
+
+  paths.forEach(p => {
+    if (p.endsWith(".ts") || validDependencies.indexOf(p) > -1) {
+      newFiles[p] = files[p];
+    }
+  });
+
+  return newFiles;
+}
+
 module.exports = async (req: Request, res: Response) => {
   try {
     const { query } = parse(req.url, true);
@@ -85,7 +115,7 @@ module.exports = async (req: Request, res: Response) => {
       ).toString();
 
       const dependencyPath = `/tmp/${dependencyLocation}/node_modules`;
-      const files = readDirectory(dependencyPath);
+      const files = cleanFiles(readDirectory(dependencyPath));
 
       if (Object.keys(files).some(p => /\.tsx?/.test(p))) {
         const filesWithNoPrefix = Object.keys(files).reduce(
@@ -105,8 +135,6 @@ module.exports = async (req: Request, res: Response) => {
           })
         );
       } else {
-        // Don't return any file if there is no typescript file for the dependency
-        // TODO: optimize this to subdirectory level
         res.end(
           JSON.stringify({
             status: "ok",
