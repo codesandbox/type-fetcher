@@ -68,7 +68,7 @@ function cleanFiles(files: { [path: string]: string }) {
     if (checkedPath.endsWith("/package.json")) {
       try {
         const parsed = JSON.parse(files[checkedPath]);
-        if (parsed.typings) {
+        if (parsed.typings || parsed.types) {
           return true;
         }
       } catch (e) {
@@ -103,7 +103,8 @@ export function extractFiles(
 
   const dependencyPath = `/tmp/${dependencyLocation}/node_modules`;
   const packageJSON = `${dependencyPath}/${dependency}/package.json`;
-  if (!JSON.parse(packageJSON).types && !dependency.startsWith("@types/")) {
+  const pkg = JSON.parse(packageJSON);
+  if (!(pkg.types || pkg.typings) && !dependency.startsWith("@types/")) {
     return {};
   }
 
