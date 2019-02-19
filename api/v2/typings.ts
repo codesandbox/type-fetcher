@@ -102,6 +102,10 @@ export function extractFiles(
   ).toString();
 
   const dependencyPath = `/tmp/${dependencyLocation}/node_modules`;
+  const packageJSON = `${dependencyPath}/${dependency}/package.json`;
+  if (!JSON.parse(packageJSON).types && !dependency.startsWith("@types/")) {
+    return {};
+  }
 
   const files = cleanFiles(readDirectory(dependencyPath));
 
