@@ -9,8 +9,8 @@
   ],
   "routes": [
     {
-      "src": "/api/typings/(.*)?\\.json",
-      "dest": "/api/v3/typings.ts?depQuery=$1"
+      "src": "/api/v3/typings/(.*)?\\.json",
+      "dest": "/api/typings.ts?depQuery=$1"
     }
   ]
 }
