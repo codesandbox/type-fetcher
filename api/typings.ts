@@ -103,7 +103,7 @@ export function extractFiles(
 
   const dependencyPath = `/tmp/${dependencyLocation}/node_modules`;
   const packageJSON = `${dependencyPath}/${dependency}/package.json`;
-  const pkg = JSON.parse(packageJSON);
+  const pkg = JSON.parse(fs.readFileSync(packageJSON).toString());
   if (!(pkg.types || pkg.typings) && !dependency.startsWith("@types/")) {
     return {};
   }
