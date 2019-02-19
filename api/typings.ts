@@ -23,8 +23,16 @@ function getDependencyAndVersion(depString: string) {
   };
 }
 
+// Directories where we only want .d.ts from
+const TYPE_ONLY_DIRECTORIES = ["src"];
+
 function isFileValid(path: string) {
-  if (path.endsWith(".ts")) {
+  const isTypeOnly = TYPE_ONLY_DIRECTORIES.some(
+    dir => path.indexOf("/" + dir + "/") > -1
+  );
+  const requiredEnding = isTypeOnly ? ".d.ts" : ".ts";
+
+  if (path.endsWith(requiredEnding)) {
     return true;
   }
 
@@ -35,7 +43,7 @@ function isFileValid(path: string) {
   return false;
 }
 
-const BLACKLISTED_DIRECTORIES = ["src", "__tests__", "aws-sdk"];
+const BLACKLISTED_DIRECTORIES = ["__tests__", "aws-sdk"];
 
 function readDirectory(location: string): { [path: string]: string } {
   const entries = fs.readdirSync(location);
@@ -96,7 +104,7 @@ export function extractFiles(
   dependency: string,
   version: string,
   dependencyLocation: string
-) {
+): { [path: string]: string } {
   execSync(
     `cd /tmp && mkdir ${dependencyLocation} && cd ${dependencyLocation} && HOME=/tmp npm i --production ${dependency}@${version} --no-save`
   ).toString();
@@ -126,6 +134,62 @@ function dropFiles(files: { [path: string]: string }) {
   return { files: result, droppedFileCount: index + 1 };
 }
 
+interface IResult {
+  files: {
+    [path: string]: string;
+  };
+  droppedFileCount?: number;
+}
+
+export async function downloadDependencyTypings(
+  depQuery: string
+): Promise<IResult> {
+  const { dependency, version = "latest" } = getDependencyAndVersion(depQuery);
+
+  const dependencyLocation = sum(`${dependency}@${version}`);
+
+  try {
+    const dependencyPath = `/tmp/${dependencyLocation}/node_modules`;
+    let files = extractFiles(dependency, version, dependencyLocation);
+
+    if (Object.keys(files).some(p => /\.tsx?/.test(p))) {
+      const filesWithNoPrefix = Object.keys(files).reduce(
+        (t, n) => ({
+          ...t,
+          [n.replace(dependencyPath, "")]: {
+            module: files[n]
+          }
+        }),
+        {}
+      );
+
+      const resultSize = JSON.stringify({
+        status: "ok",
+        files: filesWithNoPrefix
+      }).length;
+
+      if (resultSize > MAX_RES_SIZE) {
+        const { files: cleanedFiles, droppedFileCount } = dropFiles(
+          filesWithNoPrefix
+        );
+
+        return {
+          files: cleanedFiles,
+          droppedFileCount
+        };
+      } else {
+        return {
+          files: filesWithNoPrefix
+        };
+      }
+    } else {
+      return { files: {} };
+    }
+  } finally {
+    rimraf.sync(`/tmp/${dependencyLocation}`);
+  }
+}
+
 export default async (req: Request, res: Response) => {
   try {
     const { query } = parse(req.url, true);
@@ -139,67 +203,19 @@ export default async (req: Request, res: Response) => {
       throw new Error("Dependency should not be an array");
     }
 
-    const { dependency, version = "latest" } = getDependencyAndVersion(
-      depQuery
-    );
-
     res.setHeader("Cache-Control", `max-age=31536000`);
     res.setHeader("Content-Type", `application/json`);
     res.setHeader("Access-Control-Allow-Origin", `*`);
 
-    const dependencyLocation = sum(`${dependency}@${version}`);
+    const result = await downloadDependencyTypings(depQuery);
 
-    try {
-      const dependencyPath = `/tmp/${dependencyLocation}/node_modules`;
-      let files = extractFiles(dependency, version, dependencyLocation);
-
-      if (Object.keys(files).some(p => /\.tsx?/.test(p))) {
-        const filesWithNoPrefix = Object.keys(files).reduce(
-          (t, n) => ({
-            ...t,
-            [n.replace(dependencyPath, "")]: {
-              module: files[n]
-            }
-          }),
-          {}
-        );
-
-        const resultSize = JSON.stringify({
-          status: "ok",
-          files: filesWithNoPrefix
-        }).length;
-
-        if (resultSize > MAX_RES_SIZE) {
-          const { files: cleanedFiles, droppedFileCount } = dropFiles(
-            filesWithNoPrefix
-          );
-
-          res.end(
-            JSON.stringify({
-              status: "ok",
-              files: cleanedFiles,
-              droppedFileCount
-            })
-          );
-        } else {
-          res.end(
-            JSON.stringify({
-              status: "ok",
-              files: filesWithNoPrefix
-            })
-          );
-        }
-      } else {
-        res.end(
-          JSON.stringify({
-            status: "ok",
-            files: {}
-          })
-        );
-      }
-    } finally {
-      rimraf.sync(`/tmp/${dependencyLocation}`);
-    }
+    res.end(
+      JSON.stringify({
+        status: "ok",
+        files: result.files,
+        droppedFileCount: result.droppedFileCount
+      })
+    );
   } catch (e) {
     res.statusCode = 422;
     res.end(
