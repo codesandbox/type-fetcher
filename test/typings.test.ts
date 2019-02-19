@@ -1,4 +1,4 @@
-import * as typings from "../typings";
+import * as typings from "../api/typings";
 
 describe("fetchTypings", () => {
   it("exits early for dependencies with no types", async () => {
@@ -7,7 +7,7 @@ describe("fetchTypings", () => {
     expect(result.files).toEqual({});
   });
 
-  it("includes all files for @angular/core", async () => {
+  it("includes src directory files for @angular/core", async () => {
     const result = await typings.downloadDependencyTypings(
       "@angular/core@latest"
     );
