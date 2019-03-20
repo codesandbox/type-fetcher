@@ -3,6 +3,7 @@ import * as path from "path";
 import { parse } from "url";
 import { Response, Request } from "express";
 import { execSync } from "child_process";
+import recursive from "recursive-readdir";
 import sum from "hash-sum";
 import * as rimraf from "rimraf";
 
@@ -100,19 +101,26 @@ function cleanFiles(files: { [path: string]: string }) {
   return newFiles;
 }
 
-export function extractFiles(
+export function hasTypes(location: string) {
+  return recursive(location).then(paths =>
+    paths.some(p => p.endsWith(".d.ts"))
+  );
+}
+
+export async function extractFiles(
   dependency: string,
   version: string,
   dependencyLocation: string
-): { [path: string]: string } {
+): Promise<{ [path: string]: string }> {
   execSync(
     `cd /tmp && mkdir ${dependencyLocation} && cd ${dependencyLocation} && HOME=/tmp npm i --production ${dependency}@${version} --no-save`
   ).toString();
 
   const dependencyPath = `/tmp/${dependencyLocation}/node_modules`;
-  const packageJSON = `${dependencyPath}/${dependency}/package.json`;
-  const pkg = JSON.parse(fs.readFileSync(packageJSON).toString());
-  if (!(pkg.types || pkg.typings) && !dependency.startsWith("@types/")) {
+  const packagePath = `${dependencyPath}/${dependency}`;
+
+  const types = await hasTypes(packagePath);
+  if (!types && !dependency.startsWith("@types/")) {
     return {};
   }
 
@@ -150,7 +158,7 @@ export async function downloadDependencyTypings(
 
   try {
     const dependencyPath = `/tmp/${dependencyLocation}/node_modules`;
-    let files = extractFiles(dependency, version, dependencyLocation);
+    let files = await extractFiles(dependency, version, dependencyLocation);
 
     if (Object.keys(files).some(p => /\.tsx?/.test(p))) {
       const filesWithNoPrefix = Object.keys(files).reduce(

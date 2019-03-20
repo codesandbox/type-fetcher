@@ -11,6 +11,10 @@
     {
       "src": "/api/v4/typings/(.*)?\\.json",
       "dest": "/api/typings.ts?depQuery=$1"
+    },
+    {
+      "src": "/api/v5/typings/(.*)?\\.json",
+      "dest": "/api/typings.ts?depQuery=$1"
     }
   ]
 }
