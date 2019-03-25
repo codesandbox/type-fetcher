@@ -2070,10 +2070,10 @@ kleur@^3.0.2:
   resolved "https://registry.yarnpkg.com/kleur/-/kleur-3.0.2.tgz#83c7ec858a41098b613d5998a7b653962b504f68"
   integrity sha512-3h7B2WRT5LNXOtQiAaWonilegHcPSf9nLVXlSTci8lu1dZUuui61+EsPEZqSVxY7rXYmB2DVKMQILxaO5WL61Q==
 
-lambda-git@^0.1.2:
-  version "0.1.2"
-  resolved "https://registry.yarnpkg.com/lambda-git/-/lambda-git-0.1.2.tgz#32ee82a47d7fc4e9c05ab03ae22b5572d8e642e4"
-  integrity sha1-Mu6CpH1/xOnAWrA64itVctjmQuQ=
+lambda-git@0.1.1:
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/lambda-git/-/lambda-git-0.1.1.tgz#a83a3a337cd400f72fc86d362656c0537ec312a7"
+  integrity sha512-ea3saN/rIC3DH2FF/XXskwqdJHVurIh/NUQ5MWTXsWBlDYIZVUytp8CYk+TFERDHhwtlGJ5L6NBvsS/gX7Um+g==
   dependencies:
     tar-fs "^1.14.0"
 

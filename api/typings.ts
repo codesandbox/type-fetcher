@@ -7,10 +7,14 @@ import recursive from "recursive-readdir";
 import sum from "hash-sum";
 import * as rimraf from "rimraf";
 
-// Install git binaries
-/* tslint:disable no-var-requires */
-require("lambda-git")();
-/* tslint:enable */
+try {
+  // Install git binaries
+  /* tslint:disable no-var-requires */
+  require("lambda-git")();
+  /* tslint:enable */
+} catch (e) {
+  console.error(e);
+}
 
 function getDependencyAndVersion(depString: string) {
   if (
