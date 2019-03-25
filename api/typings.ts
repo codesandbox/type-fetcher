@@ -7,11 +7,6 @@ import recursive from "recursive-readdir";
 import sum from "hash-sum";
 import * as rimraf from "rimraf";
 
-// Install git binaries
-/* tslint:disable no-var-requires */
-require("lambda-git")();
-/* tslint:enable */
-
 function getDependencyAndVersion(depString: string) {
   if (
     (depString.startsWith("@") && depString.split("@").length === 2) ||
