@@ -244,12 +244,12 @@ export default async (req: Request, res: Response) => {
       throw new Error("Dependency should not be an array");
     }
 
-    res.setHeader("Cache-Control", `max-age=31536000`);
     res.setHeader("Content-Type", `application/json`);
     res.setHeader("Access-Control-Allow-Origin", `*`);
 
     const result = await downloadDependencyTypings(depQuery);
 
+    res.setHeader("Cache-Control", `max-age=31536000`);
     res.end(
       JSON.stringify({
         status: "ok",
