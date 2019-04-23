@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { parse } from "url";
 import { Response, Request } from "express";
-import { execSync } from "child_process";
+import { execSync, exec } from "child_process";
 import recursive from "recursive-readdir";
 import sum from "hash-sum";
 import * as rimraf from "rimraf";
@@ -116,15 +116,28 @@ export function hasTypes(location: string) {
   );
 }
 
+function execPromise(command: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    exec(command, (err, res) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+
+      resolve(res);
+    });
+  });
+}
+
 export async function extractFiles(
   dependency: string,
   version: string,
   dependencyLocation: string
 ): Promise<{ [path: string]: string }> {
   console.log("Installing", dependencyLocation);
-  execSync(
-    `cd /tmp && mkdir ${dependencyLocation} && cd ${dependencyLocation} && HOME=/tmp npm i --silent --production ${dependency}@${version} --no-save`
-  ).toString();
+  await execPromise(
+    `rimraf /tmp/.npm && cd /tmp && mkdir ${dependencyLocation} && cd ${dependencyLocation} && HOME=/tmp npm i --silent --production ${dependency}@${version} --no-save`
+  );
 
   const dependencyPath = `/tmp/${dependencyLocation}/node_modules`;
   const packagePath = `${dependencyPath}/${dependency}`;
@@ -239,7 +252,7 @@ export default async (req: Request, res: Response) => {
       })
     );
   } catch (e) {
-    console.error("Error", e.message);
+    console.log("Error", e.message);
     res.statusCode = 422;
     res.end(
       JSON.stringify({
