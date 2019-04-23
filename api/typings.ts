@@ -134,7 +134,7 @@ export async function extractFiles(
   version: string,
   dependencyLocation: string
 ): Promise<{ [path: string]: string }> {
-  console.log("Installing", dependencyLocation);
+  console.log(`Installing ${dependency}@${version}, id: ${dependencyLocation}`);
 
   try {
     rimraf.sync("/tmp/.npm");
