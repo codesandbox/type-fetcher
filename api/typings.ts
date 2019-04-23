@@ -121,6 +121,7 @@ export async function extractFiles(
   version: string,
   dependencyLocation: string
 ): Promise<{ [path: string]: string }> {
+  console.log("Installing", dependencyLocation);
   execSync(
     `cd /tmp && mkdir ${dependencyLocation} && cd ${dependencyLocation} && HOME=/tmp npm i --production ${dependency}@${version} --no-save`
   ).toString();
