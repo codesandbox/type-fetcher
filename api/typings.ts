@@ -203,6 +203,7 @@ export async function downloadDependencyTypings(
       return { files: {} };
     }
   } finally {
+    console.log("Cleaning", `/tmp/${dependencyLocation}`);
     rimraf.sync(`/tmp/${dependencyLocation}`);
   }
 }
