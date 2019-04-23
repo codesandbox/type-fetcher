@@ -4,7 +4,8 @@
   "builds": [
     {
       "src": "api/**/*.ts",
-      "use": "@now/node@canary"
+      "use": "@now/node@canary",
+      "config": { "maxLambdaSize": "10mb" }
     }
   ],
   "routes": [
