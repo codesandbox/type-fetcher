@@ -123,7 +123,7 @@ export async function extractFiles(
 ): Promise<{ [path: string]: string }> {
   console.log("Installing", dependencyLocation);
   execSync(
-    `cd /tmp && mkdir ${dependencyLocation} && cd ${dependencyLocation} && HOME=/tmp npm i --production ${dependency}@${version} --no-save`
+    `cd /tmp && mkdir ${dependencyLocation} && cd ${dependencyLocation} && HOME=/tmp npm i --silent --production ${dependency}@${version} --no-save`
   ).toString();
 
   const dependencyPath = `/tmp/${dependencyLocation}/node_modules`;
@@ -203,6 +203,9 @@ export async function downloadDependencyTypings(
     } else {
       return { files: {} };
     }
+  } catch (e) {
+    e.message = dependencyLocation + ": " + e.message;
+    throw e;
   } finally {
     console.log("Cleaning", `/tmp/${dependencyLocation}`);
     rimraf.sync(`/tmp/${dependencyLocation}`);
@@ -236,6 +239,7 @@ export default async (req: Request, res: Response) => {
       })
     );
   } catch (e) {
+    console.error("Error", e.message);
     res.statusCode = 422;
     res.end(
       JSON.stringify({
