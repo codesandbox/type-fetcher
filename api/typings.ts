@@ -135,8 +135,14 @@ export async function extractFiles(
   dependencyLocation: string
 ): Promise<{ [path: string]: string }> {
   console.log("Installing", dependencyLocation);
+
+  try {
+    rimraf.sync("/tmp/.npm");
+  } catch (e) {
+    console.log("[ERR] Trouble deleting " + "/tmp/.npm" + " " + e.message);
+  }
   await execPromise(
-    `rimraf /tmp/.npm && cd /tmp && mkdir ${dependencyLocation} && cd ${dependencyLocation} && HOME=/tmp npm i --silent --production ${dependency}@${version} --no-save`
+    `cd /tmp && mkdir ${dependencyLocation} && cd ${dependencyLocation} && HOME=/tmp npm i --silent --production ${dependency}@${version} --no-save`
   );
 
   const dependencyPath = `/tmp/${dependencyLocation}/node_modules`;
