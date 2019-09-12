@@ -12,8 +12,6 @@ describe("fetchTypings", () => {
       "@angular/core@7.0.0"
     );
 
-    console.log(Object.keys(result.files));
-
     expect(
       result.files["/@angular/core/src/application_tokens.d.ts"]
     ).not.toBeFalsy();
