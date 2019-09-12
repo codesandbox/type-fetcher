@@ -9,8 +9,10 @@ describe("fetchTypings", () => {
 
   it("includes src directory files for @angular/core", async () => {
     const result = await typings.downloadDependencyTypings(
-      "@angular/core@latest"
+      "@angular/core@7.0.0"
     );
+
+    console.log(Object.keys(result.files));
 
     expect(
       result.files["/@angular/core/src/application_tokens.d.ts"]
@@ -29,5 +31,13 @@ describe("fetchTypings", () => {
     const result = await typings.downloadDependencyTypings("react@16.8.0");
 
     expect(result.files).toEqual({});
+  });
+
+  it("doesn't return a 404 for reallystate", async () => {
+    const result = await typings.downloadDependencyTypings(
+      "reallystate@1.0.11"
+    );
+
+    expect(result.files).toBeTruthy();
   });
 });

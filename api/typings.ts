@@ -142,7 +142,7 @@ export async function extractFiles(
     console.log("[ERR] Trouble deleting " + "/tmp/.npm" + " " + e.message);
   }
   await execPromise(
-    `cd /tmp && mkdir ${dependencyLocation} && cd ${dependencyLocation} && HOME=/tmp npm i --silent --production ${dependency}@${version} --no-save`
+    `cd /tmp && mkdir ${dependencyLocation} && cd ${dependencyLocation} && npm init -y && HOME=/tmp npm i --production ${dependency}@${version}`
   );
 
   const dependencyPath = `/tmp/${dependencyLocation}/node_modules`;
