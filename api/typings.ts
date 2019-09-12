@@ -249,7 +249,7 @@ export default async (req: Request, res: Response) => {
 
     const result = await downloadDependencyTypings(depQuery);
 
-    res.setHeader("Cache-Control", `max-age=31536000`);
+    res.setHeader("Cache-Control", `public, max-age=31536000`);
     res.end(
       JSON.stringify({
         status: "ok",
