@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { parse } from "url";
 import { Response, Request } from "express";
-import { execSync, exec } from "child_process";
+import { exec } from "child_process";
 import recursive from "recursive-readdir";
 import sum from "hash-sum";
 import * as rimraf from "rimraf";
@@ -16,6 +16,23 @@ try {
   console.error(e);
 }
 
+const removeVersion = (depQuery: string) => depQuery.replace(/(?<!^)@.*/, "");
+
+function getDependencyName(path: string) {
+  const dependencyParts = removeVersion(path).split("/");
+  let dependencyName = dependencyParts.shift();
+
+  if (path.startsWith("@")) {
+    dependencyName += `/${dependencyParts.shift()}`;
+  }
+  if (dependencyParts[0] && /^\d/.test(dependencyParts[0])) {
+    // Make sure to include the aliased version if it's part of it
+    dependencyName += `/${dependencyParts.shift()}`;
+  }
+
+  return dependencyName || "";
+}
+
 function getDependencyAndVersion(depString: string) {
   if (
     (depString.startsWith("@") && depString.split("@").length === 2) ||
@@ -24,11 +41,13 @@ function getDependencyAndVersion(depString: string) {
     return { dependency: depString, version: "latest" };
   }
 
-  const parts = depString.split("@");
-  const version = parts.pop();
+  const dependency = getDependencyName(depString);
+  const version = depString
+    .replace(dependency + "@", "")
+    .replace("https:/", "https://");
 
   return {
-    dependency: parts.join("@"),
+    dependency,
     version
   };
 }
@@ -141,8 +160,12 @@ export async function extractFiles(
   } catch (e) {
     console.log("[ERR] Trouble deleting " + "/tmp/.npm" + " " + e.message);
   }
+
+  const installQuery = version.startsWith("http")
+    ? version
+    : `${dependency}@${version}`;
   await execPromise(
-    `cd /tmp && mkdir ${dependencyLocation} && cd ${dependencyLocation} && npm init -y && HOME=/tmp npm i --production ${dependency}@${version}`
+    `cd /tmp && mkdir ${dependencyLocation} && cd ${dependencyLocation} && npm init -y && HOME=/tmp npm i --production ${installQuery}`
   );
 
   const dependencyPath = `/tmp/${dependencyLocation}/node_modules`;

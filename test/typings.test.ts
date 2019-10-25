@@ -38,4 +38,12 @@ describe("fetchTypings", () => {
 
     expect(result.files).toBeTruthy();
   });
+
+  it("can parse urls for csb.dev", async () => {
+    const result = await typings.downloadDependencyTypings(
+      "@material-ui/core@https:/pkg.csb.dev/mui-org/material-ui/commit/007a0977/@material-ui/core"
+    );
+
+    expect(result.files).toBeTruthy();
+  }, 10000);
 });
