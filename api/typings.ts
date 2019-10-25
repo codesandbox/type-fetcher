@@ -44,7 +44,7 @@ function getDependencyAndVersion(depString: string) {
   const dependency = getDependencyName(depString);
   const version = depString
     .replace(dependency + "@", "")
-    .replace("https:/", "https://");
+    .replace(/^https:/, "https://");
 
   return {
     dependency,
