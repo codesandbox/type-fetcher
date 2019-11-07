@@ -23,7 +23,7 @@ describe("fetchTypings", () => {
     );
 
     expect(result.files["/@dojo/framework/stores/Store.d.ts"]).not.toBeFalsy();
-  });
+  }, 10000);
 
   it("doesn't include files for packages with no types", async () => {
     const result = await typings.downloadDependencyTypings("react@16.8.0");

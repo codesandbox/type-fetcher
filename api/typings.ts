@@ -137,7 +137,7 @@ export function hasTypes(location: string) {
 
 function execPromise(command: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    exec(command, (err, res) => {
+    exec(command, { maxBuffer: 1024 * 1000 }, (err, res) => {
       if (err) {
         reject(err);
         return;
@@ -201,10 +201,16 @@ interface IResult {
   droppedFileCount?: number;
 }
 
+const BLACKLISTED_DEPENDENCIES = ["react-scripts"];
+
 export async function downloadDependencyTypings(
   depQuery: string
 ): Promise<IResult> {
   const { dependency, version = "latest" } = getDependencyAndVersion(depQuery);
+
+  if (BLACKLISTED_DEPENDENCIES.indexOf(dependency) > -1) {
+    return { files: {} };
+  }
 
   const dependencyLocation = sum(`${dependency}@${version}`);
 
