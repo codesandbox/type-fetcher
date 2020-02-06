@@ -46,4 +46,10 @@ describe("fetchTypings", () => {
 
     expect(result.files).toBeTruthy();
   }, 10000);
+
+  it.only("can download single package.json", async () => {
+    const result = await typings.downloadDependencyTypings("classy-ui@2.0.0");
+
+    expect(result.files["/classy-ui/macro/package.json"]).toBeTruthy();
+  });
 });

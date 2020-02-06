@@ -16,6 +16,12 @@ try {
   console.error(e);
 }
 
+interface IFiles {
+  [path: string]: {
+    code: string;
+  };
+}
+
 const removeVersion = (depQuery: string) => depQuery.replace(/(?<!^)@.*/, "");
 
 function getDependencyName(path: string) {
@@ -74,7 +80,7 @@ function isFileValid(path: string) {
 
 const BLACKLISTED_DIRECTORIES = ["__tests__", "aws-sdk"];
 
-function readDirectory(location: string): { [path: string]: string } {
+function readDirectory(location: string): IFiles {
   const entries = fs.readdirSync(location);
 
   return entries.reduce((result, entry) => {
@@ -98,13 +104,13 @@ function readDirectory(location: string): { [path: string]: string } {
 /**
  * This function ensures that we only add package.json files that have typing files included
  */
-function cleanFiles(files: { [path: string]: string }) {
-  const newFiles: { [path: string]: string } = {};
+function cleanFiles(files: IFiles) {
+  const newFiles: IFiles = {};
   const paths = Object.keys(files);
   const validDependencies = paths.filter(checkedPath => {
     if (checkedPath.endsWith("/package.json")) {
       try {
-        const parsed = JSON.parse(files[checkedPath]);
+        const parsed = JSON.parse(files[checkedPath].code);
         if (parsed.typings || parsed.types) {
           return true;
         }
@@ -152,7 +158,7 @@ export async function extractFiles(
   dependency: string,
   version: string,
   dependencyLocation: string
-): Promise<{ [path: string]: string }> {
+): Promise<IFiles> {
   console.log(`Installing ${dependency}@${version}, id: ${dependencyLocation}`);
 
   try {
