@@ -20,7 +20,7 @@ RUN yarn --production
 COPY --from=builder /home/node/app/dist /home/node/app/dist
 COPY --from=builder /home/node/app/api /home/node/app/api
 
-RUN apk add git
+RUN apk add git python
 
 ENV PORT=8080
 EXPOSE 8080
