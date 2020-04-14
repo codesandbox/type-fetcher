@@ -7,15 +7,6 @@ import recursive from "recursive-readdir";
 import sum from "hash-sum";
 import * as rimraf from "rimraf";
 
-try {
-  // Install git binaries
-  /* tslint:disable no-var-requires */
-  require("lambda-git")();
-  /* tslint:enable */
-} catch (e) {
-  console.error(e);
-}
-
 interface IFiles {
   [path: string]: {
     code: string;
@@ -48,13 +39,11 @@ function getDependencyAndVersion(depString: string) {
   }
 
   const dependency = getDependencyName(depString);
-  const version = depString
-    .replace(dependency + "@", "")
-    .replace(/^https:/, "https://");
+  const version = decodeURIComponent(depString.replace(dependency + "@", ""));
 
   return {
     dependency,
-    version
+    version,
   };
 }
 
@@ -63,7 +52,7 @@ const TYPE_ONLY_DIRECTORIES = ["src"];
 
 function isFileValid(path: string) {
   const isTypeOnly = TYPE_ONLY_DIRECTORIES.some(
-    dir => path.indexOf("/" + dir + "/") > -1
+    (dir) => path.indexOf("/" + dir + "/") > -1
   );
   const requiredEnding = isTypeOnly ? ".d.ts" : ".ts";
 
@@ -104,10 +93,15 @@ function readDirectory(location: string): IFiles {
 /**
  * This function ensures that we only add package.json files that have typing files included
  */
-function cleanFiles(files: IFiles) {
+function cleanFiles(files: IFiles, rootPath: string) {
   const newFiles: IFiles = {};
   const paths = Object.keys(files);
-  const validDependencies = paths.filter(checkedPath => {
+  const rootPkgJSON = path.join(rootPath, "package.json");
+  const validDependencies = paths.filter((checkedPath) => {
+    if (checkedPath === rootPkgJSON) {
+      return true;
+    }
+
     if (checkedPath.endsWith("/package.json")) {
       try {
         const parsed = JSON.parse(files[checkedPath].code);
@@ -119,14 +113,14 @@ function cleanFiles(files: IFiles) {
       }
 
       return paths.some(
-        p => p.startsWith(path.dirname(checkedPath)) && p.endsWith(".ts")
+        (p) => p.startsWith(path.dirname(checkedPath)) && p.endsWith(".ts")
       );
     }
 
     return false;
   });
 
-  paths.forEach(p => {
+  paths.forEach((p) => {
     if (p.endsWith(".ts") || validDependencies.indexOf(p) > -1) {
       newFiles[p] = files[p];
     }
@@ -136,8 +130,8 @@ function cleanFiles(files: IFiles) {
 }
 
 export function hasTypes(location: string) {
-  return recursive(location).then(paths =>
-    paths.some(p => p.endsWith(".d.ts"))
+  return recursive(location).then((paths) =>
+    paths.some((p) => p.endsWith(".d.ts"))
   );
 }
 
@@ -177,20 +171,15 @@ export async function extractFiles(
   const dependencyPath = `/tmp/${dependencyLocation}/node_modules`;
   const packagePath = `${dependencyPath}/${dependency}`;
 
-  const types = await hasTypes(packagePath);
-  if (!types && !dependency.startsWith("@types/")) {
-    return {};
-  }
-
-  const files = cleanFiles(readDirectory(dependencyPath));
+  const files = cleanFiles(readDirectory(dependencyPath), packagePath);
 
   return files;
 }
 
 const MAX_RES_SIZE = 5.8 * 1024 * 1024;
 
-function dropFiles(files: { [path: string]: string }) {
-  let result: { [path: string]: string } = {};
+function dropFiles(files: IModuleResult) {
+  let result: IModuleResult = {};
   let index = 0;
   const paths = Object.keys(files);
   while (JSON.stringify(result).length < MAX_RES_SIZE && index < paths.length) {
@@ -209,60 +198,65 @@ interface IResult {
 
 const BLACKLISTED_DEPENDENCIES = ["react-scripts"];
 
+interface IModuleResult {
+  [path: string]: { module: { code: string } };
+}
+
 export async function downloadDependencyTypings(
   depQuery: string
-): Promise<IResult> {
+): Promise<IModuleResult> {
   const { dependency, version = "latest" } = getDependencyAndVersion(depQuery);
 
   if (BLACKLISTED_DEPENDENCIES.indexOf(dependency) > -1) {
-    return { files: {} };
+    return {};
   }
 
-  const dependencyLocation = sum(`${dependency}@${version}`);
+  const dependencyLocation =
+    sum(`${dependency}@${version}`) + Math.floor(Math.random() & 100000);
 
   try {
     const dependencyPath = `/tmp/${dependencyLocation}/node_modules`;
     let files = await extractFiles(dependency, version, dependencyLocation);
 
-    if (Object.keys(files).some(p => /\.tsx?/.test(p))) {
-      const filesWithNoPrefix = Object.keys(files).reduce(
-        (t, n) => ({
-          ...t,
-          [n.replace(dependencyPath, "")]: {
-            module: files[n]
-          }
-        }),
-        {}
-      );
+    const filesWithNoPrefix = Object.keys(files).reduce(
+      (t, n) => ({
+        ...t,
+        [n.replace(dependencyPath, "")]: {
+          module: files[n],
+        },
+      }),
+      {}
+    );
 
-      const resultSize = JSON.stringify({
-        status: "ok",
-        files: filesWithNoPrefix
-      }).length;
-
-      if (resultSize > MAX_RES_SIZE) {
-        const { files: cleanedFiles, droppedFileCount } = dropFiles(
-          filesWithNoPrefix
-        );
-
-        return {
-          files: cleanedFiles,
-          droppedFileCount
-        };
-      } else {
-        return {
-          files: filesWithNoPrefix
-        };
-      }
-    } else {
-      return { files: {} };
-    }
+    return filesWithNoPrefix;
   } catch (e) {
     e.message = dependencyLocation + ": " + e.message;
     throw e;
   } finally {
     console.log("Cleaning", `/tmp/${dependencyLocation}`);
     rimraf.sync(`/tmp/${dependencyLocation}`);
+  }
+}
+
+function dropFilesIfNeeded(filesWithNoPrefix: IModuleResult) {
+  const resultSize = JSON.stringify({
+    status: "ok",
+    files: filesWithNoPrefix,
+  }).length;
+
+  if (resultSize > MAX_RES_SIZE) {
+    const { files: cleanedFiles, droppedFileCount } = dropFiles(
+      filesWithNoPrefix
+    );
+
+    return {
+      files: cleanedFiles,
+      droppedFileCount,
+    };
+  } else {
+    return {
+      files: filesWithNoPrefix,
+    };
   }
 }
 
@@ -282,14 +276,15 @@ export default async (req: Request, res: Response) => {
     res.setHeader("Content-Type", `application/json`);
     res.setHeader("Access-Control-Allow-Origin", `*`);
 
-    const result = await downloadDependencyTypings(depQuery);
+    const files = await downloadDependencyTypings(depQuery);
+    const result = dropFilesIfNeeded(files);
 
     res.setHeader("Cache-Control", `public, max-age=31536000`);
     res.end(
       JSON.stringify({
         status: "ok",
         files: result.files,
-        droppedFileCount: result.droppedFileCount
+        droppedFileCount: result.droppedFileCount,
       })
     );
   } catch (e) {
@@ -300,7 +295,7 @@ export default async (req: Request, res: Response) => {
         status: "error",
         files: {},
         error: e.message,
-        stack: e.stack
+        stack: e.stack,
       })
     );
   }
