@@ -155,12 +155,6 @@ export async function extractFiles(
 ): Promise<IFiles> {
   console.log(`Installing ${dependency}@${version}, id: ${dependencyLocation}`);
 
-  try {
-    rimraf.sync("/tmp/.npm");
-  } catch (e) {
-    console.log("[ERR] Trouble deleting " + "/tmp/.npm" + " " + e.message);
-  }
-
   const installQuery = version.startsWith("http")
     ? version
     : `${dependency}@${version}`;
