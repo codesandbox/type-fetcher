@@ -206,7 +206,7 @@ export async function downloadDependencyTypings(
   }
 
   const dependencyLocation =
-    sum(`${dependency}@${version}`) + Math.floor(Math.random() & 100000);
+    sum(`${dependency}@${version}`) + Math.floor(Math.random() * 100000);
 
   try {
     const dependencyPath = `/tmp/${dependencyLocation}/node_modules`;
