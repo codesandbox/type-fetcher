@@ -11,6 +11,7 @@
   "dependencies": {
     "express": "^4.17.1",
     "hash-sum": "^1.0.2",
+    "p-queue": "^6.3.0",
     "recursive-readdir": "^2.2.2",
     "rimraf": "^2.6.3",
     "url": "^0.11.0"
@@ -23,8 +24,8 @@
     "@types/node-fetch": "^2.1.4",
     "@types/recursive-readdir": "^2.2.0",
     "@types/rimraf": "^2.0.2",
-    "lambda-git": "0.1.1",
     "jest": "^24.1.0",
+    "lambda-git": "0.1.1",
     "node-fetch": "^2.3.0",
     "ts-jest": "^24.0.0",
     "typescript": "^3.2.4"

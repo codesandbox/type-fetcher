@@ -1,7 +1,9 @@
 import express from "express";
+import PQueue from "p-queue";
 import { downloadDependencyTypings } from "./typings";
 
 const app = express();
+const queue = new PQueue({ concurrency: 1, timeout: 1000 * 60 });
 
 app.get("/api/v8/:dependency", async (req, res) => {
   try {
@@ -12,7 +14,7 @@ app.get("/api/v8/:dependency", async (req, res) => {
     res.setHeader("Content-Type", `application/json`);
     res.setHeader("Access-Control-Allow-Origin", `*`);
 
-    const files = await downloadDependencyTypings(depQuery);
+    const files = await queue.add(() => downloadDependencyTypings(depQuery));
 
     res.setHeader("Cache-Control", `public, max-age=31536000`);
 
