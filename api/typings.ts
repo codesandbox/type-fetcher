@@ -204,6 +204,7 @@ export async function downloadDependencyTypings(
   if (BLACKLISTED_DEPENDENCIES.indexOf(dependency) > -1) {
     return {};
   }
+  const startTime = Date.now();
 
   const dependencyLocation =
     sum(`${dependency}@${version}`) + Math.floor(Math.random() * 100000);
@@ -227,7 +228,8 @@ export async function downloadDependencyTypings(
     e.message = dependencyLocation + ": " + e.message;
     throw e;
   } finally {
-    console.log("Cleaning", `/tmp/${dependencyLocation}`);
+    const duration = (Date.now() - startTime) / 1000;
+    console.log(`${dependency}@${version}: done in ${duration}s. Cleaning...`);
     rimraf.sync(`/tmp/${dependencyLocation}`);
   }
 }
