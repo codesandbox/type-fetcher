@@ -3,6 +3,7 @@ import { downloadDependencyTypings } from "./typings";
 
 const app = express();
 
+let count = 0;
 app.get("/api/v8/:dependency", async (req, res) => {
   try {
     const depQuery = decodeURIComponent(
@@ -12,7 +13,10 @@ app.get("/api/v8/:dependency", async (req, res) => {
     res.setHeader("Content-Type", `application/json`);
     res.setHeader("Access-Control-Allow-Origin", `*`);
 
+    ++count;
+
     const files = await downloadDependencyTypings(depQuery);
+    console.log(`Jobs count: ${--count}`);
 
     res.setHeader("Cache-Control", `public, max-age=31536000`);
 
