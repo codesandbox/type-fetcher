@@ -11,7 +11,6 @@
   "dependencies": {
     "express": "^4.17.1",
     "hash-sum": "^1.0.2",
-    "p-queue": "^6.3.0",
     "recursive-readdir": "^2.2.2",
     "rimraf": "^2.6.3",
     "url": "^0.11.0"
