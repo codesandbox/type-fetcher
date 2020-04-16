@@ -33,6 +33,7 @@ app.get("/api/v8/:dependency", async (req, res) => {
     });
     const files = await queue.add(() => {
       if (connectionClosed) {
+        console.log("Skipping " + depQuery);
         return Promise.resolve({});
       }
 

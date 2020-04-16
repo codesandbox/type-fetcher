@@ -230,7 +230,7 @@ export async function downloadDependencyTypings(
   } finally {
     const duration = (Date.now() - startTime) / 1000;
     console.log(`${dependency}@${version}: done in ${duration}s. Cleaning...`);
-    rimraf.sync(`/tmp/${dependencyLocation}`);
+    rimraf.default(`/tmp/${dependencyLocation}`, () => {});
   }
 }
 
