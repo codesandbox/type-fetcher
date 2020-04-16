@@ -23,7 +23,6 @@ function getFileFromS3(
       },
       (err, packageData) => {
         if (err && err.name !== "AccessDenied") {
-          console.error(err);
           reject(err);
           return;
         }
