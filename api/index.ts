@@ -70,7 +70,6 @@ const app = express();
 
 const queue = new PQueue({
   concurrency: 4,
-  timeout: 60000,
 });
 
 let count = 0;
