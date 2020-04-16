@@ -1,9 +1,23 @@
 import express from "express";
+import PQueue from "p-queue";
 import { downloadDependencyTypings } from "./typings";
 
 const app = express();
 
+const queue = new PQueue({
+  concurrency: 4,
+  timeout: 60000,
+});
+
 let count = 0;
+queue.on("active", () => {
+  console.log(
+    `Working on item #${++count}.  Size: ${queue.size}  Pending: ${
+      queue.pending
+    }`
+  );
+});
+
 app.get("/api/v8/:dependency", async (req, res) => {
   try {
     const depQuery = decodeURIComponent(
@@ -13,10 +27,17 @@ app.get("/api/v8/:dependency", async (req, res) => {
     res.setHeader("Content-Type", `application/json`);
     res.setHeader("Access-Control-Allow-Origin", `*`);
 
-    ++count;
+    let connectionClosed = false;
+    req.on("close", () => {
+      connectionClosed = true;
+    });
+    const files = await queue.add(() => {
+      if (connectionClosed) {
+        return Promise.resolve({});
+      }
 
-    const files = await downloadDependencyTypings(depQuery);
-    console.log(`Jobs count: ${--count}`);
+      return downloadDependencyTypings(depQuery);
+    });
 
     res.setHeader("Cache-Control", `public, max-age=31536000`);
 

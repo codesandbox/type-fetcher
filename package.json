@@ -11,6 +11,7 @@
   "dependencies": {
     "express": "^4.17.1",
     "hash-sum": "^1.0.2",
+    "p-queue": "^6.3.0",
     "recursive-readdir": "^2.2.2",
     "rimraf": "^2.6.3",
     "url": "^0.11.0"
@@ -19,7 +20,7 @@
     "@types/express": "^4.16.1",
     "@types/hash-sum": "^1.0.0",
     "@types/jest": "^24.0.6",
-    "@types/node": "^10.12.18",
+    "@types/node": "^13.11.1",
     "@types/node-fetch": "^2.1.4",
     "@types/recursive-readdir": "^2.2.0",
     "@types/rimraf": "^2.0.2",
@@ -27,6 +28,6 @@
     "lambda-git": "0.1.1",
     "node-fetch": "^2.3.0",
     "ts-jest": "^24.0.0",
-    "typescript": "^3.2.4"
+    "typescript": "^3.8.3"
   }
 }
