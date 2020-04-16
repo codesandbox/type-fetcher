@@ -30,7 +30,7 @@ function getDependencyName(path: string) {
   return dependencyName || "";
 }
 
-function getDependencyAndVersion(depString: string) {
+export function getDependencyAndVersion(depString: string) {
   if (
     (depString.startsWith("@") && depString.split("@").length === 2) ||
     depString.split("@").length === 1
