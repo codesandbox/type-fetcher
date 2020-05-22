@@ -52,6 +52,7 @@ function saveFileToS3(
         Body: zlib.gzipSync(content),
         ContentType: contentType,
         CacheControl: "public, max-age=31536000",
+        ContentEncoding: "gzip",
       },
       (err, response) => {
         if (err) {
