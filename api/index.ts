@@ -2,6 +2,7 @@ import express from "express";
 import PQueue from "p-queue";
 import { downloadDependencyTypings, getDependencyAndVersion } from "./typings";
 import aws from "aws-sdk";
+import * as zlib from "zlib";
 
 const s3 = new aws.S3();
 
@@ -48,7 +49,7 @@ function saveFileToS3(
       {
         Bucket: BUCKET_NAME,
         Key: keyPath, // don't allow slashes
-        Body: content,
+        Body: zlib.gzipSync(content),
         ContentType: contentType,
         CacheControl: "public, max-age=31536000",
       },
