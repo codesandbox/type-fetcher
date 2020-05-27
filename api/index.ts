@@ -99,9 +99,11 @@ app.get("/api/v8/:dependency", async (req, res) => {
       const bucketResponse = await getFileFromS3(bucketPath);
       if (bucketResponse?.Body) {
         res.setHeader("Cache-Control", `public, max-age=31536000`);
-        res.setHeader("Content-Encoding", `gzip`);
+        if (bucketResponse.ETag) {
+          res.setHeader("ETag", bucketResponse.ETag);
+        }
 
-        res.end(bucketResponse.Body.toString());
+        res.end(zlib.gunzipSync(bucketResponse.Body.toString()));
         return;
       }
     } catch (e) {
