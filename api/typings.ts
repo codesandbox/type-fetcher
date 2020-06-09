@@ -151,7 +151,7 @@ function execPromise(command: string): Promise<string> {
     // Max 80s
     timeoutId = setTimeout(() => {
       process.kill("SIGINT");
-    }, 80_000);
+    }, 80000);
   });
 }
 
