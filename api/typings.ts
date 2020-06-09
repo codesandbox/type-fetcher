@@ -137,7 +137,9 @@ export function hasTypes(location: string) {
 
 function execPromise(command: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    exec(command, { maxBuffer: 1024 * 1000 }, (err, res) => {
+    let timeoutId: NodeJS.Timer;
+    const process = exec(command, { maxBuffer: 1024 * 1000 }, (err, res) => {
+      clearTimeout(timeoutId);
       if (err) {
         reject(err);
         return;
@@ -145,6 +147,11 @@ function execPromise(command: string): Promise<string> {
 
       resolve(res);
     });
+
+    // Max 80s
+    timeoutId = setTimeout(() => {
+      process.kill("SIGINT");
+    }, 80_000);
   });
 }
 

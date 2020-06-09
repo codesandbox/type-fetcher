@@ -103,6 +103,7 @@ app.get("/api/v8/:dependency", async (req, res) => {
             res.setHeader("ETag", bucketResponse.ETag);
           }
 
+          console.log(`Returning S3 file for ${dependency}@${version}`);
           return zlib.gunzipSync(bucketResponse.Body.toString());
         }
       } catch (e) {
