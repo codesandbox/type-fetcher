@@ -95,22 +95,20 @@ app.get("/api/v8/:dependency", async (req, res) => {
 
     const bucketPath = `v1/typings/${dependency}/${version}.json`;
 
-    try {
-      const bucketResponse = await getFileFromS3(bucketPath);
-      if (bucketResponse?.Body) {
-        res.setHeader("Cache-Control", `public, max-age=31536000`);
-        if (bucketResponse.ETag) {
-          res.setHeader("ETag", bucketResponse.ETag);
-        }
-
-        res.end(zlib.gunzipSync(bucketResponse.Body.toString()));
-        return;
-      }
-    } catch (e) {
-      /* ignore */
-    }
-
     const response = await queue.add(async () => {
+      try {
+        const bucketResponse = await getFileFromS3(bucketPath);
+        if (bucketResponse?.Body) {
+          if (bucketResponse.ETag) {
+            res.setHeader("ETag", bucketResponse.ETag);
+          }
+
+          return zlib.gunzipSync(bucketResponse.Body.toString());
+        }
+      } catch (e) {
+        /* ignore */
+      }
+
       const files = await downloadDependencyTypings(depQuery);
       const stringifiedFiles = JSON.stringify({ files });
 
