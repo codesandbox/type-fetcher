@@ -67,6 +67,30 @@ function saveFileToS3(
   });
 }
 
+function getBucketPath(dependency: string, version: string) {
+  return `v1/typings/${dependency}/${version}.json`;
+}
+
+async function getCache(
+  dependency: string,
+  version: string
+): Promise<{ body: Buffer; ETag: string | undefined } | undefined> {
+  const bucketPath = getBucketPath(dependency, version);
+
+  try {
+    const bucketResponse = await getFileFromS3(bucketPath);
+    if (bucketResponse?.Body) {
+      console.log(`Returning S3 file for ${dependency}@${version}`);
+      return {
+        body: zlib.gunzipSync(bucketResponse.Body.toString()),
+        ETag: bucketResponse.ETag,
+      };
+    }
+  } catch (e) {
+    /* ignore */
+  }
+}
+
 const app = express();
 
 const queue = new PQueue({
@@ -93,18 +117,23 @@ app.get("/api/v8/:dependency", async (req, res) => {
 
     const { dependency, version } = getDependencyAndVersion(depQuery);
 
-    const bucketPath = `v1/typings/${dependency}/${version}.json`;
+    const bucketRes = await getCache(dependency, version);
+
+    if (bucketRes) {
+      if (bucketRes.ETag) {
+        res.setHeader("ETag", bucketRes.ETag);
+      }
+
+      res.setHeader("Cache-Control", `public, max-age=31536000`);
+      res.end(bucketRes.body);
+      return;
+    }
 
     const response = await queue.add(async () => {
       try {
-        const bucketResponse = await getFileFromS3(bucketPath);
-        if (bucketResponse?.Body) {
-          if (bucketResponse.ETag) {
-            res.setHeader("ETag", bucketResponse.ETag);
-          }
-
-          console.log(`Returning S3 file for ${dependency}@${version}`);
-          return zlib.gunzipSync(bucketResponse.Body.toString());
+        const bucketRes = await getCache(dependency, version);
+        if (bucketRes) {
+          return bucketRes.body;
         }
       } catch (e) {
         /* ignore */
@@ -113,6 +142,7 @@ app.get("/api/v8/:dependency", async (req, res) => {
       const files = await downloadDependencyTypings(depQuery);
       const stringifiedFiles = JSON.stringify({ files });
 
+      const bucketPath = getBucketPath(dependency, version);
       saveFileToS3(bucketPath, stringifiedFiles);
 
       return stringifiedFiles;
