@@ -74,7 +74,7 @@ function getBucketPath(dependency: string, version: string) {
 async function getCache(
   dependency: string,
   version: string
-): Promise<{ body: Buffer; ETag: string | undefined } | undefined> {
+): Promise<{ body: string; ETag: string | undefined } | undefined> {
   const bucketPath = getBucketPath(dependency, version);
 
   try {
@@ -82,7 +82,7 @@ async function getCache(
     if (bucketResponse?.Body) {
       console.log(`Returning S3 file for ${dependency}@${version}`);
       return {
-        body: zlib.gunzipSync(bucketResponse.Body.toString()),
+        body: zlib.gunzipSync(bucketResponse.Body.toString()).toString(),
         ETag: bucketResponse.ETag,
       };
     }
