@@ -82,7 +82,8 @@ async function getCache(
     if (bucketResponse?.Body) {
       console.log(`Returning S3 file for ${dependency}@${version}`);
       return {
-        body: zlib.gunzipSync(bucketResponse.Body.toString()).toString(),
+        // @ts-ignore It works
+        body: zlib.gunzipSync(bucketResponse.Body).toString(),
         ETag: bucketResponse.ETag,
       };
     }
@@ -136,6 +137,7 @@ app.get("/api/v8/:dependency", async (req, res) => {
           return bucketRes.body;
         }
       } catch (e) {
+        console.error(e);
         /* ignore */
       }
 
