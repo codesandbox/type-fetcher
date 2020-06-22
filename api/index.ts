@@ -107,6 +107,10 @@ queue.on("active", () => {
   );
 });
 
+app.get("/healthz", async (req, res) => {
+  res.end("ok");
+});
+
 app.get("/api/v8/:dependency", async (req, res) => {
   try {
     const depQuery = decodeURIComponent(
