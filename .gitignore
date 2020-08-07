@@ -80,3 +80,4 @@ typings/
 .dynamodb/
 
 dist
+test_typings

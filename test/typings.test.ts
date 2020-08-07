@@ -1,6 +1,24 @@
+import { existsSync, mkdirSync, readdirSync } from "fs";
+import * as path from "path";
+
 import * as typings from "../api/typings";
 
+const testTypingsFolder = path.resolve("test_typings");
+
+console.log("TEST writing files to " + testTypingsFolder);
+
 describe("fetchTypings", () => {
+  beforeAll(async () => {
+    // Add a folder to see if it cleans up
+    mkdirSync(path.join(testTypingsFolder, "old-folder"));
+    await typings.prepareTypingsFolder(testTypingsFolder);
+  });
+  afterAll(() => {
+    expect(readdirSync(testTypingsFolder)).toEqual([]);
+  });
+  it("should clean the tmp folder ", async () => {
+    expect(readdirSync(testTypingsFolder)).toEqual([]);
+  });
   it("includes src directory files for @angular/core", async () => {
     const result = await typings.downloadDependencyTypings(
       "@angular/core@7.0.0"
@@ -49,5 +67,17 @@ describe("fetchTypings", () => {
     );
 
     expect(result["/@styled-system/css/package.json"]).toBeTruthy();
+  });
+
+  it("should clean old dependencies", async () => {
+    const dir = path.join(testTypingsFolder, "old-dependency");
+    mkdirSync(dir);
+    // The check for this is done after all tests are run
+    typings.packageInstalls["old-dependency"] =
+      Date.now() - typings.cleanUpTime - 1;
+    await typings.downloadDependencyTypings("@styled-system/css@5.1.5");
+    // Since we do not wait for the cleanup, we have to wait a little bit to ensure it is done
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    expect(existsSync(dir)).toBe(false);
   });
 });

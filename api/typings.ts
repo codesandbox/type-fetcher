@@ -1,16 +1,41 @@
+import { exec } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
 import { parse } from "url";
-import { Response, Request } from "express";
-import { exec } from "child_process";
-import recursive from "recursive-readdir";
+
+import { Request, Response } from "express";
 import sum from "hash-sum";
+import recursive from "recursive-readdir";
 import * as rimraf from "rimraf";
 
 interface IFiles {
   [path: string]: {
     code: string;
   };
+}
+
+let typingsFolder: string;
+// Export for testing purposes
+export const packageInstalls: { [name: string]: number } = {};
+export const cleanUpTime = 10 * 60 * 1000; // When 10 minutes old
+
+export function prepareTypingsFolder(folder: string) {
+  typingsFolder = folder;
+  // Delete any old packages due to restart of the process
+  return new Promise((resolve, reject) => {
+    if (!fs.existsSync(folder)) {
+      fs.mkdirSync(folder);
+    }
+    rimraf.default(folder + "/*", (err) => {
+      if (err) {
+        console.log("Unable to clean TMP", err);
+        reject();
+      } else {
+        console.log("Clean TMP folder");
+        resolve();
+      }
+    });
+  });
 }
 
 const removeVersion = (depQuery: string) => depQuery.replace(/(?<!^)@.*/, "");
@@ -166,10 +191,10 @@ export async function extractFiles(
     ? version
     : `${dependency}@${version}`;
   await execPromise(
-    `cd /tmp && mkdir ${dependencyLocation} && cd ${dependencyLocation} && npm init -y && HOME=/tmp yarn add --no-lockfile --non-interactive --no-progress --prod --cache-folder ./ ${installQuery}`
+    `cd ${typingsFolder} && mkdir ${dependencyLocation} && cd ${dependencyLocation} && npm init -y && HOME=${typingsFolder} yarn add --no-lockfile --non-interactive --no-progress --prod --cache-folder ./ ${installQuery}`
   );
 
-  const dependencyPath = `/tmp/${dependencyLocation}/node_modules`;
+  const dependencyPath = `${typingsFolder}/${dependencyLocation}/node_modules`;
   const packagePath = `${dependencyPath}/${dependency}`;
 
   const files = cleanFiles(readDirectory(dependencyPath), packagePath);
@@ -217,7 +242,8 @@ export async function downloadDependencyTypings(
     sum(`${dependency}@${version}`) + Math.floor(Math.random() * 100000);
 
   try {
-    const dependencyPath = `/tmp/${dependencyLocation}/node_modules`;
+    const dependencyPath = `${typingsFolder}/${dependencyLocation}/node_modules`;
+    packageInstalls[dependencyLocation] = Date.now();
     let files = await extractFiles(dependency, version, dependencyLocation);
 
     const filesWithNoPrefix = Object.keys(files).reduce(
@@ -237,7 +263,35 @@ export async function downloadDependencyTypings(
   } finally {
     const duration = (Date.now() - startTime) / 1000;
     console.log(`${dependency}@${version}: done in ${duration}s. Cleaning...`);
-    rimraf.default(`/tmp/${dependencyLocation}`, () => {});
+
+    rimraf.default(`${typingsFolder}/${dependencyLocation}`, (err) => {
+      if (err) {
+        console.log("ERROR - Could not clean up " + dependencyLocation);
+      } else {
+        delete packageInstalls[dependencyLocation];
+      }
+    });
+
+    const now = Date.now();
+    Object.keys(packageInstalls).forEach((possiblyOldDependencyLocation) => {
+      if (now - packageInstalls[possiblyOldDependencyLocation] > cleanUpTime) {
+        rimraf.default(
+          `${typingsFolder}/${possiblyOldDependencyLocation}`,
+          (err) => {
+            if (err) {
+              console.log(
+                "ERROR - Could not clean up " +
+                  possiblyOldDependencyLocation +
+                  ", which has been there since " +
+                  packageInstalls[possiblyOldDependencyLocation]
+              );
+            } else {
+              delete packageInstalls[possiblyOldDependencyLocation];
+            }
+          }
+        );
+      }
+    });
   }
 }
 
