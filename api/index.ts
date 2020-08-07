@@ -1,8 +1,14 @@
+import * as zlib from "zlib";
+
+import aws from "aws-sdk";
 import express from "express";
 import PQueue from "p-queue";
-import { downloadDependencyTypings, getDependencyAndVersion } from "./typings";
-import aws from "aws-sdk";
-import * as zlib from "zlib";
+
+import {
+  downloadDependencyTypings,
+  getDependencyAndVersion,
+  prepareTypingsFolder,
+} from "./typings";
 
 const s3 = new aws.S3();
 
@@ -171,6 +177,9 @@ app.get("/api/v8/:dependency", async (req, res) => {
   }
 });
 const PORT = Number(process.env.PORT) || 4646;
-app.listen(PORT, () => {
-  console.log("Listening on " + PORT);
+
+prepareTypingsFolder("/tmp/typings").then(() => {
+  app.listen(PORT, () => {
+    console.log("Listening on " + PORT);
+  });
 });
