@@ -191,7 +191,7 @@ export async function extractFiles(
     ? version
     : `${dependency}@${version}`;
   await execPromise(
-    `cd ${typingsFolder} && mkdir ${dependencyLocation} && cd ${dependencyLocation} && npm init -y && HOME=${typingsFolder}/${dependencyLocation} yarn add --no-lockfile --non-interactive --no-progress --prod --cache-folder ./ ${installQuery}`
+    `cd ${typingsFolder} && mkdir ${dependencyLocation} && cd ${dependencyLocation} && npm init -y && HOME=${typingsFolder}/${dependencyLocation} yarn add  --ignore-engines --no-lockfile --non-interactive --no-progress --prod --cache-folder ./ ${installQuery}`
   );
 
   const dependencyPath = `${typingsFolder}/${dependencyLocation}/node_modules`;
