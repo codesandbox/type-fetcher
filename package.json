@@ -7,7 +7,8 @@
     "dev": "tsc --watch",
     "build": "tsc",
     "test": "jest",
-    "start": "node dist/api"
+    "start": "node dist/api",
+    "start:dev": "node dist/api/dev"
   },
   "dependencies": {
     "aws-sdk": "^2.656.0",
