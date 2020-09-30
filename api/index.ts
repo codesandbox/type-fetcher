@@ -116,10 +116,12 @@ queue.on("active", () => {
 });
 
 app.get("/healthz", async (req, res) => {
+  res.setHeader("Cache-Control", `no-cache`);
   res.end("ok");
 });
 
 app.get("/_stats", async (req, res) => {
+  res.setHeader("Cache-Control", `no-cache`);
   res.setHeader("Content-Type", `application/json`);
   res.setHeader("Access-Control-Allow-Origin", `*`);
 
