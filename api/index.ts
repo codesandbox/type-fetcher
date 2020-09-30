@@ -119,7 +119,7 @@ app.get("/healthz", async (req, res) => {
   res.end("ok");
 });
 
-app.get("/stats", async (req, res) => {
+app.get("/_stats", async (req, res) => {
   res.setHeader("Content-Type", `application/json`);
   res.setHeader("Access-Control-Allow-Origin", `*`);
 
