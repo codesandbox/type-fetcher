@@ -132,8 +132,10 @@ app.get("/_stats", async (req, res) => {
     );
 
     res.end(
-      JSON.stringify(
-        results
+      JSON.stringify({
+        count,
+        queueSize: queue.size,
+        result: results
           .map((result, index) => ({
             name: dirs[index],
             created: result.birthtime,
@@ -146,11 +148,11 @@ app.get("/_stats", async (req, res) => {
             }
 
             return 0;
-          })
-      )
+          }),
+      })
     );
-  } catch {
-    res.end("[]");
+  } catch (e) {
+    res.end(JSON.stringify({ error: e.message }));
   }
 });
 
