@@ -1,3 +1,5 @@
+import * as fs from "fs";
+import * as path from "path";
 import * as zlib from "zlib";
 
 import aws from "aws-sdk";
@@ -115,6 +117,29 @@ queue.on("active", () => {
 
 app.get("/healthz", async (req, res) => {
   res.end("ok");
+});
+
+app.get("/stats", async (req, res) => {
+  res.setHeader("Content-Type", `application/json`);
+  res.setHeader("Access-Control-Allow-Origin", `*`);
+
+  try {
+    const dirs = await fs.promises.readdir(path.resolve("tmp", "typings"));
+    const results = await Promise.all(
+      dirs.map((dir) => fs.promises.stat(path.resolve("tmp", "typings", dir)))
+    );
+
+    res.end(
+      JSON.stringify(
+        results.map((result, index) => ({
+          name: dirs[index],
+          created: result.birthtime,
+        }))
+      )
+    );
+  } catch {
+    res.end("[]");
+  }
 });
 
 app.get("/api/v8/:dependency", async (req, res) => {
