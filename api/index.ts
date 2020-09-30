@@ -126,9 +126,9 @@ app.get("/_stats", async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", `*`);
 
   try {
-    const dirs = await fs.promises.readdir(path.resolve("tmp", "typings"));
+    const dirs = await fs.promises.readdir(path.resolve("/tmp", "typings"));
     const results = await Promise.all(
-      dirs.map((dir) => fs.promises.stat(path.resolve("tmp", "typings", dir)))
+      dirs.map((dir) => fs.promises.stat(path.resolve("/tmp", "typings", dir)))
     );
 
     res.end(
