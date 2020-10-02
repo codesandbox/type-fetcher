@@ -199,6 +199,13 @@ app.get("/api/v8/:dependency", async (req, res) => {
       return stringifiedFiles;
     });
 
+    if (queue.size === 0 && queue.pending === 0) {
+      queue.add(() => {
+        console.log("Cleaning up all typings");
+        return prepareTypingsFolder("/tmp/typings");
+      });
+    }
+
     res.setHeader("Cache-Control", `public, max-age=31536000`);
 
     res.end(response);
