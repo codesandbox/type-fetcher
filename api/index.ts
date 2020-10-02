@@ -16,6 +16,8 @@ const s3 = new aws.S3();
 
 const BUCKET_NAME = "prod-packager-packages.codesandbox.io";
 
+let lastClean = Date.now();
+const MAX_CLEAN_INTERVAL = 1000 * 60 * 60 * 1; // Every hour
 function getFileFromS3(
   keyPath: string
 ): Promise<aws.S3.GetObjectOutput | null> {
@@ -199,14 +201,24 @@ app.get("/api/v8/:dependency", async (req, res) => {
       return stringifiedFiles;
     });
 
-    if (queue.size === 0 && queue.pending === 0) {
+    if (
+      queue.size === 0 &&
+      queue.pending === 0 &&
+      Date.now() - lastClean >= MAX_CLEAN_INTERVAL
+    ) {
+      lastClean = Date.now();
+      queue.concurrency = 1;
       queue.add(async () => {
-        console.log("Cleaning up all typings...");
-        await prepareTypingsFolder("/tmp/typings");
-        console.log(
-          "Directories after cleanup",
-          await fs.promises.readdir(path.resolve("/tmp", "typings"))
-        );
+        try {
+          console.log("Cleaning up all typings...");
+          await prepareTypingsFolder("/tmp/typings");
+          console.log(
+            "Directories after cleanup",
+            await fs.promises.readdir(path.resolve("/tmp", "typings"))
+          );
+        } finally {
+          queue.concurrency = 4;
+        }
       });
     }
 
