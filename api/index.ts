@@ -200,9 +200,13 @@ app.get("/api/v8/:dependency", async (req, res) => {
     });
 
     if (queue.size === 0 && queue.pending === 0) {
-      queue.add(() => {
-        console.log("Cleaning up all typings");
-        return prepareTypingsFolder("/tmp/typings");
+      queue.add(async () => {
+        console.log("Cleaning up all typings...");
+        await prepareTypingsFolder("/tmp/typings");
+        console.log(
+          "Directories after cleanup",
+          await fs.promises.readdir(path.resolve("/tmp", "typings"))
+        );
       });
     }
 
