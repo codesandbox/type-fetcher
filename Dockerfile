@@ -1,4 +1,4 @@
-FROM node:13 as builder
+FROM node:14.13.1 as builder
 
 WORKDIR /home/node/app
 
@@ -9,7 +9,7 @@ RUN yarn
 ADD . /home/node/app
 RUN yarn build && rm -rf node_modules
 
-FROM node:13-alpine as runner
+FROM node:14.13.1-alpine as runner
 RUN apk add git python make g++
 
 WORKDIR /home/node/app

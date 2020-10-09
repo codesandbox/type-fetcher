@@ -180,6 +180,10 @@ function execPromise(command: string): Promise<string> {
   });
 }
 
+export function cleanYarnCache() {
+  return execPromise("yarn clean");
+}
+
 export async function extractFiles(
   dependency: string,
   version: string,

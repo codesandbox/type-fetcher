@@ -7,6 +7,7 @@ import express from "express";
 import PQueue from "p-queue";
 
 import {
+  cleanYarnCache,
   downloadDependencyTypings,
   getDependencyAndVersion,
   prepareTypingsFolder,
@@ -201,27 +202,6 @@ app.get("/api/v8/:dependency", async (req, res) => {
       return stringifiedFiles;
     });
 
-    if (
-      queue.size === 0 &&
-      queue.pending === 0 &&
-      Date.now() - lastClean >= MAX_CLEAN_INTERVAL
-    ) {
-      lastClean = Date.now();
-      queue.concurrency = 1;
-      queue.add(async () => {
-        try {
-          console.log("Cleaning up all typings...");
-          await prepareTypingsFolder("/tmp/typings");
-          console.log(
-            "Directories after cleanup",
-            await fs.promises.readdir(path.resolve("/tmp", "typings"))
-          );
-        } finally {
-          queue.concurrency = 4;
-        }
-      });
-    }
-
     res.setHeader("Cache-Control", `public, max-age=31536000`);
 
     res.end(response);
@@ -236,6 +216,28 @@ app.get("/api/v8/:dependency", async (req, res) => {
         stack: e.stack,
       })
     );
+  } finally {
+    if (
+      queue.size === 0 &&
+      queue.pending === 0 &&
+      Date.now() - lastClean >= MAX_CLEAN_INTERVAL
+    ) {
+      lastClean = Date.now();
+      queue.concurrency = 1;
+      queue.add(async () => {
+        try {
+          console.log("Cleaning up all typings...");
+          await prepareTypingsFolder("/tmp/typings");
+          await cleanYarnCache();
+          console.log(
+            "Directories after cleanup",
+            await fs.promises.readdir(path.resolve("/tmp", "typings"))
+          );
+        } finally {
+          queue.concurrency = 4;
+        }
+      });
+    }
   }
 });
 const PORT = Number(process.env.PORT) || 4646;
