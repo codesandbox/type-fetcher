@@ -181,7 +181,7 @@ function execPromise(command: string): Promise<string> {
 }
 
 export function cleanYarnCache() {
-  return execPromise("yarn clean");
+  return execPromise("yarn cache clean");
 }
 
 export async function extractFiles(
