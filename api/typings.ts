@@ -226,7 +226,7 @@ interface IResult {
   droppedFileCount?: number;
 }
 
-const BLACKLISTED_DEPENDENCIES = ["react-scripts"];
+const BLACKLISTED_DEPENDENCIES = ["react-scripts", "@types/material-uiIcons"];
 
 interface IModuleResult {
   [path: string]: { module: { code: string } };
