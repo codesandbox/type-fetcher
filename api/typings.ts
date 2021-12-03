@@ -214,6 +214,7 @@ function dropFiles(files: IModuleResult) {
   const paths = Object.keys(files);
   while (JSON.stringify(result).length < MAX_RES_SIZE && index < paths.length) {
     result[paths[index]] = files[paths[index]];
+    index++;
   }
 
   return { files: result, droppedFileCount: index + 1 };
