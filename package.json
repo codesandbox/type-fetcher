@@ -11,7 +11,7 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "aws-sdk": "^2.656.0",
+    "aws-sdk": "^2.814.0",
     "express": "^4.17.1",
     "hash-sum": "^1.0.2",
     "p-queue": "^7.4.1",
