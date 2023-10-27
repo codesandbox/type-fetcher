@@ -1,29 +1,26 @@
-FROM node:14.13.1 as builder
+FROM node:21-alpine as build
+WORKDIR /app
+COPY package.json yarn.lock ./
 
-WORKDIR /home/node/app
-
-ADD package.json /home/node/app/package.json
-ADD yarn.lock /home/node/app/yarn.lock
 RUN yarn
 
-ADD . /home/node/app
-RUN yarn build && rm -rf node_modules
+# Bundle app source
+COPY . .
 
-FROM node:14.13.1-alpine as runner
-RUN apk add git python make g++
+RUN yarn build
 
-WORKDIR /home/node/app
-
-COPY --from=builder /home/node/app/package.json /home/node/app/package.json
-COPY --from=builder /home/node/app/yarn.lock /home/node/app/yarn.lock
-RUN yarn --production
-
-COPY --from=builder /home/node/app/dist /home/node/app/dist
-COPY --from=builder /home/node/app/api /home/node/app/api
-
+FROM node:21-alpine
 
 ENV PORT=8080
-EXPOSE 8080
+EXPOSE $PORT
+WORKDIR /app
 
-CMD yarn start
+RUN apk add git python3 make g++
 
+COPY --chown=node:node --from=build /app/node_modules node_modules
+COPY --chown=node:node --from=build /app/dist dist
+COPY --chown=node:node --from=build /app/package.json ./
+
+USER node
+
+CMD ["node", "dist/index.js"]

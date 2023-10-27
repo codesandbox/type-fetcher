@@ -1,20 +1,20 @@
 {
   "name": "type-fetcher",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/index.js",
   "license": "MIT",
+  "type": "module",
   "scripts": {
-    "dev": "tsc --watch",
+    "dev": "tsc-watch --onSuccess \"node dist\"",
     "build": "tsc",
     "test": "jest",
-    "start": "node dist/api",
-    "start:dev": "node dist/api/dev"
+    "start": "node dist/index.js"
   },
   "dependencies": {
     "aws-sdk": "^2.656.0",
     "express": "^4.17.1",
     "hash-sum": "^1.0.2",
-    "p-queue": "^6.3.0",
+    "p-queue": "^7.4.1",
     "recursive-readdir": "^2.2.2",
     "rimraf": "^2.6.3",
     "url": "^0.11.0",
@@ -32,6 +32,7 @@
     "lambda-git": "0.1.1",
     "node-fetch": "^2.3.0",
     "ts-jest": "^24.0.0",
-    "typescript": "^3.8.3"
+    "tsc-watch": "^6.0.4",
+    "typescript": "^5.2.2"
   }
 }

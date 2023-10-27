@@ -22,7 +22,7 @@ export const cleanUpTime = 10 * 60 * 1000; // When 10 minutes old
 export function prepareTypingsFolder(folder: string) {
   typingsFolder = folder;
   // Delete any old packages due to restart of the process
-  return new Promise((resolve, reject) => {
+  return new Promise<void>((resolve, reject) => {
     if (!fs.existsSync(folder)) {
       fs.mkdirSync(folder);
     }
@@ -220,13 +220,6 @@ function dropFiles(files: IModuleResult) {
   return { files: result, droppedFileCount: index + 1 };
 }
 
-interface IResult {
-  files: {
-    [path: string]: string;
-  };
-  droppedFileCount?: number;
-}
-
 const BLACKLISTED_DEPENDENCIES = ["react-scripts", "@types/material-uiIcons"];
 
 interface IModuleResult {
@@ -307,9 +300,8 @@ function dropFilesIfNeeded(filesWithNoPrefix: IModuleResult) {
   }).length;
 
   if (resultSize > MAX_RES_SIZE) {
-    const { files: cleanedFiles, droppedFileCount } = dropFiles(
-      filesWithNoPrefix
-    );
+    const { files: cleanedFiles, droppedFileCount } =
+      dropFiles(filesWithNoPrefix);
 
     return {
       files: cleanedFiles,

@@ -11,7 +11,7 @@ import {
   downloadDependencyTypings,
   getDependencyAndVersion,
   prepareTypingsFolder,
-} from "./typings";
+} from "./typings.js";
 
 const s3 = new aws.S3();
 
@@ -118,12 +118,12 @@ queue.on("active", () => {
   );
 });
 
-app.get("/healthz", async (req, res) => {
+app.get("/healthz", async (_req, res) => {
   res.setHeader("Cache-Control", `no-cache`);
   res.end("ok");
 });
 
-app.get("/_stats", async (req, res) => {
+app.get("/_stats", async (_req, res) => {
   res.setHeader("Cache-Control", `no-cache`);
   res.setHeader("Content-Type", `application/json`);
   res.setHeader("Access-Control-Allow-Origin", `*`);
@@ -240,7 +240,14 @@ app.get("/api/v8/:dependency", async (req, res) => {
     }
   }
 });
-const PORT = Number(process.env.PORT) || 4646;
+const PORT = Number(process.env.PORT) || 8080;
+
+process.on("SIGTERM", function onSigterm() {
+  process.exit();
+});
+process.on("SIGINT", function onSigterm() {
+  process.exit();
+});
 
 prepareTypingsFolder("/tmp/typings").then(() => {
   app.listen(PORT, () => {

@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readdirSync } from "fs";
 import * as path from "path";
 
-import * as typings from "../api/typings";
+import * as typings from "../src/typings";
 
 const testTypingsFolder = path.resolve("test_typings");
 
