@@ -11,7 +11,7 @@ env:
 
 jobs:
   docker:
-    runs-on: default-runner-csb
+    runs-on: ubuntu-latest
 
     permissions:
       contents: "read"
