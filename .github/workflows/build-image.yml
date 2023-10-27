@@ -44,7 +44,7 @@ jobs:
 
       - uses: docker/login-action@v3
         with:
-          registry: gcr.io
+          registry: europe-docker.pkg.dev
           username: "oauth2accesstoken"
           password: "${{ steps.auth.outputs.access_token }}"
 
