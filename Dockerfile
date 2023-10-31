@@ -1,4 +1,4 @@
-FROM node:21-alpine as build
+FROM node:20-alpine as build
 WORKDIR /app
 COPY package.json yarn.lock ./
 
@@ -9,7 +9,7 @@ COPY . .
 
 RUN yarn build
 
-FROM node:21-alpine
+FROM node:20-alpine
 
 ENV PORT=8080
 EXPOSE $PORT
