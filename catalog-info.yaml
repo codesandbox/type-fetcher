@@ -1,0 +1,19 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: type-fetcher
+  description: Type Fetcher
+  annotations:
+    github.com/project-slug: codesandbox/type-fetcher
+    backstage.io/kubernetes-namespace: type-fetcher
+    backstage.io/kubernetes-label-selector: app=type-fetcher
+    codesandbox/deploy-image: europe-docker.pkg.dev/codesandbox-microservices/codesandbox/type-fetcher
+    codesandbox/deploy-gitops-repo: codesandbox/codesandbox-gitops
+    codesandbox/deploy-gitops-yaml-key: 'spec.template.spec.containers[0].image'
+    codesandbox/deploy-image-tag-regex-production: '.*'
+    codesandbox/deploy-gitops-file-production: codesandbox-apps/type-fetcher/deployment.yaml
+    codesandbox/deploy-gitops-version-type: image
+spec:
+  type: service
+  lifecycle: production
+  owner: infra
