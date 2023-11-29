@@ -1,13 +1,22 @@
-FROM node:20-alpine as build
+FROM node:20-alpine as base
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
 WORKDIR /app
-COPY package.json yarn.lock ./
 
-RUN yarn
+FROM base AS prod-deps
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    --mount=type=bind,source=package.json,target=package.json \
+    --mount=type=bind,source=pnpm-lock.yaml,target=pnpm-lock.yaml \
+    pnpm install --prod --frozen-lockfile
 
-# Bundle app source
-COPY . .
-
-RUN yarn build
+FROM base AS build
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    --mount=type=bind,source=package.json,target=package.json \
+    --mount=type=bind,source=pnpm-lock.yaml,target=pnpm-lock.yaml \
+    pnpm install --frozen-lockfile
+COPY . /app
+RUN pnpm run build
 
 FROM node:20-alpine
 
@@ -17,7 +26,7 @@ WORKDIR /app
 
 RUN apk add git python3 make g++
 
-COPY --chown=node:node --from=build /app/node_modules node_modules
+COPY --from=prod-deps /app/node_modules node_modules
 COPY --chown=node:node --from=build /app/dist dist
 COPY --chown=node:node --from=build /app/package.json ./
 

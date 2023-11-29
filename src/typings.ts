@@ -6,7 +6,7 @@ import { parse } from "url";
 import { Request, Response } from "express";
 import sum from "hash-sum";
 import recursive from "recursive-readdir";
-import * as rimraf from "rimraf";
+import { rimraf } from "rimraf";
 
 interface IFiles {
   [path: string]: {
@@ -19,23 +19,19 @@ let typingsFolder: string;
 export const packageInstalls: { [name: string]: number } = {};
 export const cleanUpTime = 10 * 60 * 1000; // When 10 minutes old
 
-export function prepareTypingsFolder(folder: string) {
+export async function prepareTypingsFolder(folder: string) {
   typingsFolder = folder;
   // Delete any old packages due to restart of the process
-  return new Promise<void>((resolve, reject) => {
-    if (!fs.existsSync(folder)) {
-      fs.mkdirSync(folder);
-    }
-    rimraf.default(folder + "/*", (err) => {
-      if (err) {
-        console.log("Unable to clean TMP", err);
-        reject();
-      } else {
-        console.log("Clean TMP folder");
-        resolve();
-      }
-    });
-  });
+  if (!fs.existsSync(folder)) {
+    fs.mkdirSync(folder);
+  }
+
+  try {
+    await rimraf(folder + "/*");
+    console.log("Clean TMP folder");
+  } catch (error) {
+    console.log("Unable to clean TMP", error);
+  }
 }
 
 const removeVersion = (depQuery: string) => depQuery.replace(/(?<!^)@.*/, "");
@@ -162,7 +158,7 @@ export function hasTypes(location: string) {
 
 function execPromise(command: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    let timeoutId: NodeJS.Timer;
+    let timeoutId: NodeJS.Timeout;
     const process = exec(command, { maxBuffer: 1024 * 1000 }, (err, res) => {
       clearTimeout(timeoutId);
       if (err) {
@@ -262,34 +258,29 @@ export async function downloadDependencyTypings(
     const duration = (Date.now() - startTime) / 1000;
     console.log(`${dependency}@${version}: done in ${duration}s. Cleaning...`);
 
-    rimraf.default(`${typingsFolder}/${dependencyLocation}`, (err) => {
-      if (err) {
-        console.log("ERROR - Could not clean up " + dependencyLocation);
-      } else {
-        delete packageInstalls[dependencyLocation];
-      }
-    });
+    try {
+      await rimraf(`${typingsFolder}/${dependencyLocation}`);
+      delete packageInstalls[dependencyLocation];
+    } catch (error) {
+      console.log("ERROR - Could not clean up " + dependencyLocation);
+    }
 
     const now = Date.now();
-    Object.keys(packageInstalls).forEach((possiblyOldDependencyLocation) => {
+    for (const possiblyOldDependencyLocation of Object.keys(packageInstalls)) {
       if (now - packageInstalls[possiblyOldDependencyLocation] > cleanUpTime) {
-        rimraf.default(
-          `${typingsFolder}/${possiblyOldDependencyLocation}`,
-          (err) => {
-            if (err) {
-              console.log(
-                "ERROR - Could not clean up " +
-                  possiblyOldDependencyLocation +
-                  ", which has been there since " +
-                  packageInstalls[possiblyOldDependencyLocation]
-              );
-            } else {
-              delete packageInstalls[possiblyOldDependencyLocation];
-            }
-          }
-        );
+        try {
+          await rimraf(`${typingsFolder}/${possiblyOldDependencyLocation}`);
+          delete packageInstalls[possiblyOldDependencyLocation];
+        } catch (error) {
+          console.log(
+            "ERROR - Could not clean up " +
+              possiblyOldDependencyLocation +
+              ", which has been there since " +
+              packageInstalls[possiblyOldDependencyLocation]
+          );
+        }
       }
-    });
+    }
   }
 }
 

@@ -10,28 +10,22 @@
     "test": "jest",
     "start": "node dist/index.js"
   },
+  "packageManager": "pnpm@8.11.0",
   "dependencies": {
-    "aws-sdk": "^2.814.0",
-    "express": "^4.17.1",
-    "hash-sum": "^1.0.2",
+    "aws-sdk": "^2.1506.0",
+    "express": "^4.18.2",
+    "hash-sum": "^2.0.0",
     "p-queue": "^7.4.1",
-    "recursive-readdir": "^2.2.2",
-    "rimraf": "^2.6.3",
+    "recursive-readdir": "^2.2.3",
+    "rimraf": "^5.0.5",
     "url": "^0.11.0",
     "zlib": "^1.0.5"
   },
   "devDependencies": {
-    "@types/express": "^4.16.1",
-    "@types/hash-sum": "^1.0.0",
-    "@types/jest": "^24.0.6",
-    "@types/node": "^13.11.1",
-    "@types/node-fetch": "^2.1.4",
-    "@types/recursive-readdir": "^2.2.0",
-    "@types/rimraf": "^2.0.2",
-    "jest": "^24.1.0",
-    "lambda-git": "0.1.1",
-    "node-fetch": "^2.3.0",
-    "ts-jest": "^24.0.0",
+    "@types/express": "^4.17.21",
+    "@types/hash-sum": "^1.0.2",
+    "@types/node": "^20.10.0",
+    "@types/recursive-readdir": "^2.2.4",
     "tsc-watch": "^6.0.4",
     "typescript": "^5.2.2"
   }
