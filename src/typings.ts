@@ -1,4 +1,5 @@
 import { exec } from "child_process";
+import * as fsPromises from "fs/promises";
 import * as fs from "fs";
 import * as path from "path";
 import { parse } from "url";
@@ -22,9 +23,7 @@ export const cleanUpTime = 10 * 60 * 1000; // When 10 minutes old
 export async function prepareTypingsFolder(folder: string) {
   typingsFolder = folder;
   // Delete any old packages due to restart of the process
-  if (!fs.existsSync(folder)) {
-    fs.mkdirSync(folder);
-  }
+  await fsPromises.mkdir(folder, { recursive: true });
 
   try {
     await rimraf(folder + "/*");
@@ -73,7 +72,7 @@ const TYPE_ONLY_DIRECTORIES = ["src"];
 
 function isFileValid(path: string) {
   const isTypeOnly = TYPE_ONLY_DIRECTORIES.some(
-    (dir) => path.indexOf("/" + dir + "/") > -1
+    (dir) => path.indexOf("/" + dir + "/") > -1,
   );
   const requiredEnding = isTypeOnly ? ".d.ts" : ".ts";
 
@@ -134,7 +133,7 @@ function cleanFiles(files: IFiles, rootPath: string) {
       }
 
       return paths.some(
-        (p) => p.startsWith(path.dirname(checkedPath)) && p.endsWith(".ts")
+        (p) => p.startsWith(path.dirname(checkedPath)) && p.endsWith(".ts"),
       );
     }
 
@@ -152,7 +151,7 @@ function cleanFiles(files: IFiles, rootPath: string) {
 
 export function hasTypes(location: string) {
   return recursive(location).then((paths) =>
-    paths.some((p) => p.endsWith(".d.ts"))
+    paths.some((p) => p.endsWith(".d.ts")),
   );
 }
 
@@ -183,15 +182,24 @@ export function cleanYarnCache() {
 export async function extractFiles(
   dependency: string,
   version: string,
-  dependencyLocation: string
+  dependencyLocation: string,
 ): Promise<IFiles> {
   console.log(`Installing ${dependency}@${version}, id: ${dependencyLocation}`);
 
-  const installQuery = version.startsWith("http")
-    ? version
-    : `${dependency}@${version}`;
+  const dependencyFolder = path.join(typingsFolder, dependencyLocation);
+  await fsPromises.mkdir(dependencyFolder, { recursive: true });
+  await fsPromises.writeFile(
+    path.join(dependencyFolder, "package.json"),
+    JSON.stringify({
+      name: dependencyLocation,
+      version: "0.0.0",
+      dependencies: {
+        [dependency]: version,
+      },
+    }),
+  );
   await execPromise(
-    `cd ${typingsFolder} && mkdir ${dependencyLocation} && cd ${dependencyLocation} && npm init -y && HOME=${typingsFolder}/${dependencyLocation} yarn add  --ignore-engines --no-lockfile --non-interactive --no-progress --prod --cache-folder ./ ${installQuery}`
+    `cd ${typingsFolder} && mkdir ${dependencyLocation} && cd ${dependencyLocation} && npm init -y && HOME=${typingsFolder}/${dependencyLocation} yarn install --ignore-scripts --ignore-engines --no-lockfile --non-interactive --no-progress --prod --cache-folder`,
   );
 
   const dependencyPath = `${typingsFolder}/${dependencyLocation}/node_modules`;
@@ -223,7 +231,7 @@ interface IModuleResult {
 }
 
 export async function downloadDependencyTypings(
-  depQuery: string
+  depQuery: string,
 ): Promise<IModuleResult> {
   const { dependency, version = "latest" } = getDependencyAndVersion(depQuery);
 
@@ -247,7 +255,7 @@ export async function downloadDependencyTypings(
           module: files[n],
         },
       }),
-      {}
+      {},
     );
 
     return filesWithNoPrefix;
@@ -276,7 +284,7 @@ export async function downloadDependencyTypings(
             "ERROR - Could not clean up " +
               possiblyOldDependencyLocation +
               ", which has been there since " +
-              packageInstalls[possiblyOldDependencyLocation]
+              packageInstalls[possiblyOldDependencyLocation],
           );
         }
       }
@@ -330,18 +338,18 @@ export default async (req: Request, res: Response) => {
         status: "ok",
         files: result.files,
         droppedFileCount: result.droppedFileCount,
-      })
+      }),
     );
   } catch (e) {
     console.log("Error", e.message);
     res.statusCode = 422;
+    res.setHeader("Content-Type", `application/json`);
     res.end(
       JSON.stringify({
         status: "error",
         files: {},
         error: e.message,
-        stack: e.stack,
-      })
+      }),
     );
   }
 };

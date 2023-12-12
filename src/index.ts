@@ -20,7 +20,7 @@ const BUCKET_NAME = "prod-packager-packages.codesandbox.io";
 let lastClean = Date.now();
 const MAX_CLEAN_INTERVAL = 1000 * 60 * 60 * 1; // Every hour
 function getFileFromS3(
-  keyPath: string
+  keyPath: string,
 ): Promise<aws.S3.GetObjectOutput | null> {
   return new Promise((resolve, reject) => {
     if (!BUCKET_NAME) {
@@ -40,7 +40,7 @@ function getFileFromS3(
         }
 
         resolve(packageData);
-      }
+      },
     );
   });
 }
@@ -48,7 +48,7 @@ function getFileFromS3(
 function saveFileToS3(
   keyPath: string,
   content: string,
-  contentType: string = "application/json"
+  contentType: string = "application/json",
 ): Promise<aws.S3.PutObjectOutput> {
   return new Promise((resolve, reject) => {
     if (!BUCKET_NAME) {
@@ -73,7 +73,7 @@ function saveFileToS3(
         }
 
         resolve(response);
-      }
+      },
     );
   });
 }
@@ -84,7 +84,7 @@ function getBucketPath(dependency: string, version: string) {
 
 async function getCache(
   dependency: string,
-  version: string
+  version: string,
 ): Promise<{ body: string; ETag: string | undefined } | undefined> {
   const bucketPath = getBucketPath(dependency, version);
 
@@ -114,7 +114,7 @@ queue.on("active", () => {
   console.log(
     `Working on item #${++count}.  Size: ${queue.size}  Pending: ${
       queue.pending
-    }`
+    }`,
   );
 });
 
@@ -131,7 +131,7 @@ app.get("/_stats", async (_req, res) => {
   try {
     const dirs = await fs.promises.readdir(path.resolve("/tmp", "typings"));
     const results = await Promise.all(
-      dirs.map((dir) => fs.promises.stat(path.resolve("/tmp", "typings", dir)))
+      dirs.map((dir) => fs.promises.stat(path.resolve("/tmp", "typings", dir))),
     );
 
     res.end(
@@ -152,7 +152,7 @@ app.get("/_stats", async (_req, res) => {
 
             return 0;
           }),
-      })
+      }),
     );
   } catch (e) {
     res.end(JSON.stringify({ error: e.message }));
@@ -162,7 +162,7 @@ app.get("/_stats", async (_req, res) => {
 app.get("/api/v8/:dependency", async (req, res) => {
   try {
     const depQuery = decodeURIComponent(
-      req.params.dependency.replace(/\.json$/, "")
+      req.params.dependency.replace(/\.json$/, ""),
     );
 
     res.setHeader("Content-Type", `application/json`);
@@ -208,13 +208,13 @@ app.get("/api/v8/:dependency", async (req, res) => {
   } catch (e) {
     console.log("Error", e.message);
     res.statusCode = 422;
+    res.setHeader("Content-Type", `application/json`);
     res.end(
       JSON.stringify({
         status: "error",
         files: {},
         error: e.message,
-        stack: e.stack,
-      })
+      }),
     );
   } finally {
     if (
@@ -231,7 +231,7 @@ app.get("/api/v8/:dependency", async (req, res) => {
           await cleanYarnCache();
           console.log(
             "Directories after cleanup",
-            await fs.promises.readdir(path.resolve("/tmp", "typings"))
+            await fs.promises.readdir(path.resolve("/tmp", "typings")),
           );
         } finally {
           queue.concurrency = 4;
